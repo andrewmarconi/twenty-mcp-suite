@@ -1,0 +1,30 @@
+{
+  "name": "twenty-crm-mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Version-resilient MCP server for self-hosted Twenty CRM",
+  "author": "Andrew / Five59 Labs",
+  "keywords": ["mcp", "twenty", "crm", "model-context-protocol"],
+  "bin": { "twenty-crm-mcp": "dist/index.js" },
+  "files": ["dist", "skill", "README.md"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "tsup"
+  },
+  "dependencies": {
+    "twenty-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9",
+    "@types/node": "^26.0.1"
+  }
+}
