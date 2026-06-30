@@ -18,13 +18,22 @@ export class GraphQLClient {
       body: JSON.stringify({ query, variables }),
     });
     const text = await res.text();
-    const parsed = text ? JSON.parse(text) : {};
+    const parsed = text ? safeJson(text) : {};
     if (!res.ok) {
       throw new TwentyApiError(`Twenty GraphQL failed (${res.status})`, res.status, parsed, url);
     }
-    if (parsed.errors) {
-      throw new TwentyApiError("Twenty GraphQL returned errors", res.status, parsed.errors, url);
+    const data = parsed as { errors?: unknown; data?: unknown };
+    if (data.errors) {
+      throw new TwentyApiError("Twenty GraphQL returned errors", res.status, data.errors, url);
     }
-    return parsed.data;
+    return data.data;
+  }
+}
+
+function safeJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
   }
 }

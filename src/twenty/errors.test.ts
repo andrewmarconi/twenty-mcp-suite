@@ -15,8 +15,24 @@ describe("TwentyApiError", () => {
 });
 
 describe("isSchemaDriftError", () => {
-  it("treats 404 as drift", () => {
-    expect(isSchemaDriftError(404, {})).toBe(true);
+  it("does not treat a bare 404 as drift", () => {
+    expect(isSchemaDriftError(404, {})).toBe(false);
+  });
+
+  it("treats a 404 mentioning an unknown object as drift", () => {
+    expect(isSchemaDriftError(404, { messages: ["cannot find object"] })).toBe(true);
+  });
+
+  it("treats a 404 saying an object does not exist as drift", () => {
+    expect(
+      isSchemaDriftError(404, { messages: ['Object "companies" does not exist'] }),
+    ).toBe(true);
+  });
+
+  it("does not treat a record-not-found 404 as drift", () => {
+    expect(
+      isSchemaDriftError(404, { messages: ['Could not find Person with id "abc"'] }),
+    ).toBe(false);
   });
 
   it("treats a 400 mentioning an unknown field as drift", () => {

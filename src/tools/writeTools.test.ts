@@ -39,6 +39,17 @@ describe("writeTools", () => {
     ).rejects.toThrow(/id/);
   });
 
+  it("update_records issues no PATCHes when any record in the batch is missing an id", async () => {
+    const rest = { patch: vi.fn() };
+    await expect(
+      tool("update_records", rest).handler({
+        object: "people",
+        records: [{ id: "1", name: "A" }, { name: "no-id" }],
+      }),
+    ).rejects.toThrow(/id/);
+    expect(rest.patch).not.toHaveBeenCalled();
+  });
+
   it("delete_records DELETEs each id", async () => {
     const rest = { del: vi.fn().mockResolvedValue({ data: {} }) };
     await tool("delete_records", rest).handler({ object: "people", ids: ["1", "2"] });

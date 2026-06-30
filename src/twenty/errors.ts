@@ -22,8 +22,16 @@ const DRIFT_PATTERNS = [
 ];
 
 export function isSchemaDriftError(status: number, body: unknown): boolean {
-  if (status === 404) return true;
-  if (status !== 400) return false;
+  // 404 is treated the same as 400: it is schema drift ONLY if the body
+  // matches DRIFT_PATTERNS (e.g. "cannot find object", "object ... does not
+  // exist"). A bare/record-not-found 404 (e.g. get_record/update_records/
+  // delete_records with a stale id, "Could not find Person with id ...") is
+  // NOT drift and must fall through as an ordinary error, otherwise the
+  // model gets told to call refresh_schema and loops on a retry that can
+  // never succeed. The exact Twenty 404 drift wording is unverified against
+  // a live instance (provisional, like search/upsert) — DRIFT_PATTERNS may
+  // need tuning once the integration suite lands (Task 13).
+  if (status !== 400 && status !== 404) return false;
   const text = JSON.stringify(body ?? "");
   return DRIFT_PATTERNS.some((p) => p.test(text));
 }

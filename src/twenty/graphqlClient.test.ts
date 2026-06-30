@@ -23,4 +23,24 @@ describe("GraphQLClient", () => {
     const client = new GraphQLClient(cfg, fetchImpl as unknown as typeof fetch);
     await expect(client.request("q", {})).rejects.toMatchObject({ status: 200 });
   });
+
+  it("throws TwentyApiError on a non-2xx transport response", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(res(500, { messages: ["boom"] }));
+    const client = new GraphQLClient(cfg, fetchImpl as unknown as typeof fetch);
+    await expect(client.request("q", {})).rejects.toMatchObject({
+      status: 500,
+      body: { messages: ["boom"] },
+    });
+  });
+
+  it("throws TwentyApiError (not SyntaxError) on a non-2xx, non-JSON body", async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(new Response("<html>Internal Server Error</html>", { status: 502 }));
+    const client = new GraphQLClient(cfg, fetchImpl as unknown as typeof fetch);
+    await expect(client.request("q", {})).rejects.toMatchObject({
+      status: 502,
+      body: "<html>Internal Server Error</html>",
+    });
+  });
 });

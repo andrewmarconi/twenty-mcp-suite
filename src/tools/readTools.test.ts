@@ -35,7 +35,11 @@ describe("readTools", () => {
 
   it("maps a drift error into a refresh_schema hint", async () => {
     const rest = {
-      get: vi.fn().mockRejectedValue(new TwentyApiError("x", 404, {}, "/rest/people")),
+      get: vi
+        .fn()
+        .mockRejectedValue(
+          new TwentyApiError("x", 404, { messages: ["cannot find object people"] }, "/rest/people"),
+        ),
     };
     await expect(
       tool("query_records", rest).handler({ object: "people" }),

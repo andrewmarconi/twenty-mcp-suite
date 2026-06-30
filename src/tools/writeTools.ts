@@ -30,10 +30,16 @@ export function writeTools(rest: RestClient, cache: SchemaCache): ToolDef[] {
         await cache.ensureLoaded();
         const obj = cache.resolve(a.object);
         return withDriftHandling(a.object, async () => {
+          // Validate every record has an id BEFORE issuing any PATCH, so a
+          // batch with a bad record (e.g. missing id) never partially
+          // applies earlier records' writes.
+          for (const record of a.records) {
+            const { id } = record as { id?: string };
+            if (!id) throw new Error("Each record in update_records must include an id.");
+          }
           const results = [];
           for (const record of a.records) {
             const { id, ...rest_ } = record as { id?: string };
-            if (!id) throw new Error("Each record in update_records must include an id.");
             results.push(await rest.patch(`/rest/${obj.namePlural}/${id}`, rest_));
           }
           return JSON.stringify(results);
