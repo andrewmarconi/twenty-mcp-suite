@@ -2,18 +2,7 @@ import { z } from "zod";
 import type { RestClient } from "../twenty/restClient.js";
 import type { SchemaCache } from "../schema/cache.js";
 import type { ToolDef } from "./schemaTools.js";
-import { TwentyApiError, isSchemaDriftError, driftHint } from "../twenty/errors.js";
-
-async function withDriftHandling<T>(object: string, fn: () => Promise<T>): Promise<T> {
-  try {
-    return await fn();
-  } catch (err) {
-    if (err instanceof TwentyApiError && isSchemaDriftError(err.status, err.body)) {
-      throw new Error(`${err.message}.${driftHint(object)}`);
-    }
-    throw err;
-  }
-}
+import { withDriftHandling } from "./helpers.js";
 
 export function readTools(rest: RestClient, cache: SchemaCache): ToolDef[] {
   const queryShape = z.object({
