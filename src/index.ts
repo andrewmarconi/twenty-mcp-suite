@@ -1,12 +1,15 @@
-import { SERVER_NAME, SERVER_VERSION } from "./version.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { loadConfig } from "./config.js";
+import { createServer } from "./server.js";
 
-// Full server wiring is added in Task 11. This stub keeps the build green.
 async function main(): Promise<void> {
-  // eslint-disable-next-line no-console
-  console.error(`${SERVER_NAME} ${SERVER_VERSION} starting…`);
+  const config = loadConfig(process.env);
+  const { server } = createServer(config);
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
 }
 
 main().catch((err) => {
-  console.error(err);
+  console.error(err instanceof Error ? err.message : err);
   process.exit(1);
 });
