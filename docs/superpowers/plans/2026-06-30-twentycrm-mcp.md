@@ -10,6 +10,7 @@
 
 ## Global Constraints
 
+- Package manager: **pnpm** (not npm) for all installs and scripts, per the user's standard tooling. Configure the supply-chain age guard (`minimumReleaseAge`) and build-script approvals (`onlyBuiltDependencies`, e.g. `esbuild` for tsup) in `pnpm-workspace.yaml`. Let pnpm pick safe versions under the age guard — bare `pnpm add`, never `@latest`. If `pnpm install` fails with `ERR_PNPM_IGNORED_BUILDS`, add the named package to `onlyBuiltDependencies` and reinstall.
 - Runtime: Node.js >= 20 (native global `fetch`). Declare `"engines": { "node": ">=20" }`.
 - Transport: stdio only. No HTTP/remote/multi-tenant.
 - Config via env only: `TWENTY_BASE_URL`, `TWENTY_API_KEY`. No other required config.
@@ -28,6 +29,7 @@
 
 **Files:**
 - Create: `package.json`
+- Create: `pnpm-workspace.yaml`
 - Create: `tsconfig.json`
 - Create: `tsup.config.ts`
 - Create: `vitest.config.ts`
@@ -38,7 +40,7 @@
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: a buildable, testable TypeScript project. `npm run build` emits `dist/index.js` with a shebang; `npm test` runs vitest.
+- Produces: a buildable, testable TypeScript project. `pnpm build` emits `dist/index.js` with a shebang; `pnpm test` runs vitest.
 
 - [ ] **Step 1: Create `package.json`**
 
@@ -57,7 +59,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "tsup"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "latest",
@@ -72,7 +74,17 @@
 }
 ```
 
-Then run `npm install` (the package manager picks safe latest versions per the supply-chain age guard; do not pin `@latest` by hand). After install, replace each `"latest"` with the resolved version range npm wrote into the lockfile.
+Then run `pnpm install` (the package manager picks safe versions per the supply-chain age guard; do not pin `@latest` by hand). After install, replace each `"latest"` with the resolved version range pnpm wrote into the lockfile. Keep `"prepublishOnly": "tsup"` (PM-agnostic) so publishing doesn't assume a package manager.
+
+- [ ] **Step 1b: Create `pnpm-workspace.yaml`** (supply-chain age guard + build-script approvals)
+
+```yaml
+minimumReleaseAge: 1440
+onlyBuiltDependencies:
+  - esbuild
+```
+
+If `pnpm install` later reports `ERR_PNPM_IGNORED_BUILDS` for another package, add that package name under `onlyBuiltDependencies` and reinstall.
 
 - [ ] **Step 2: Create `tsconfig.json`**
 
@@ -143,7 +155,7 @@ describe("version", () => {
 
 - [ ] **Step 7: Run test to verify it fails**
 
-Run: `npm test`
+Run: `pnpm test`
 Expected: FAIL — cannot resolve `./version.js`.
 
 - [ ] **Step 8: Create `src/version.ts`**
@@ -172,7 +184,7 @@ main().catch((err) => {
 
 - [ ] **Step 10: Run test + build to verify both pass**
 
-Run: `npm test && npm run build`
+Run: `pnpm test && pnpm build`
 Expected: test PASS; build emits `dist/index.js`.
 
 - [ ] **Step 11: Commit**
@@ -225,7 +237,7 @@ describe("loadConfig", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test src/config.test.ts`
+Run: `pnpm test src/config.test.ts`
 Expected: FAIL — cannot resolve `./config.js`.
 
 - [ ] **Step 3: Implement `src/config.ts`**
@@ -257,7 +269,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): TwentyConfig {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npm test src/config.test.ts`
+Run: `pnpm test src/config.test.ts`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -330,7 +342,7 @@ describe("driftHint", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test src/twenty/errors.test.ts`
+Run: `pnpm test src/twenty/errors.test.ts`
 Expected: FAIL — cannot resolve `./errors.js`.
 
 - [ ] **Step 3: Implement `src/twenty/errors.ts`**
@@ -372,7 +384,7 @@ export function driftHint(objectName: string): string {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npm test src/twenty/errors.test.ts`
+Run: `pnpm test src/twenty/errors.test.ts`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -456,7 +468,7 @@ describe("RestClient", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test src/twenty/restClient.test.ts`
+Run: `pnpm test src/twenty/restClient.test.ts`
 Expected: FAIL — cannot resolve `./restClient.js`.
 
 - [ ] **Step 3: Implement `src/twenty/restClient.ts`**
@@ -532,7 +544,7 @@ function safeJson(text: string): unknown {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npm test src/twenty/restClient.test.ts`
+Run: `pnpm test src/twenty/restClient.test.ts`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -641,7 +653,7 @@ describe("fetchAllObjects", () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `npm test src/schema/metadata.test.ts`
+Run: `pnpm test src/schema/metadata.test.ts`
 Expected: FAIL — cannot resolve `./metadata.js`.
 
 - [ ] **Step 4: Implement `src/schema/types.ts`**
@@ -743,7 +755,7 @@ function normalizeField(f: RawField): FieldSchema {
 
 - [ ] **Step 6: Run test to verify it passes**
 
-Run: `npm test src/schema/metadata.test.ts`
+Run: `pnpm test src/schema/metadata.test.ts`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -819,7 +831,7 @@ describe("SchemaCache", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test src/schema/cache.test.ts`
+Run: `pnpm test src/schema/cache.test.ts`
 Expected: FAIL — cannot resolve `./cache.js`.
 
 - [ ] **Step 3: Implement `src/schema/cache.ts`**
@@ -887,7 +899,7 @@ export class SchemaCache {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npm test src/schema/cache.test.ts`
+Run: `pnpm test src/schema/cache.test.ts`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -957,7 +969,7 @@ describe("schemaTools", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test src/tools/schemaTools.test.ts`
+Run: `pnpm test src/tools/schemaTools.test.ts`
 Expected: FAIL — cannot resolve `./schemaTools.js`.
 
 - [ ] **Step 3: Implement `src/tools/schemaTools.ts`**
@@ -1018,7 +1030,7 @@ export function schemaTools(cache: SchemaCache): ToolDef[] {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npm test src/tools/schemaTools.test.ts`
+Run: `pnpm test src/tools/schemaTools.test.ts`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1095,7 +1107,7 @@ describe("readTools", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test src/tools/readTools.test.ts`
+Run: `pnpm test src/tools/readTools.test.ts`
 Expected: FAIL — cannot resolve `./readTools.js`.
 
 - [ ] **Step 3: Implement `src/tools/readTools.ts`**
@@ -1183,7 +1195,7 @@ NOTE: the exact `search` path/params (`/rest/search?q=`) is the least-certain RE
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npm test src/tools/readTools.test.ts`
+Run: `pnpm test src/tools/readTools.test.ts`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1226,7 +1238,7 @@ export async function withDriftHandling<T>(object: string, fn: () => Promise<T>)
 }
 ```
 
-Then update `src/tools/readTools.ts` to import `withDriftHandling` from `./helpers.js` and delete its local copy. Run `npm test src/tools/readTools.test.ts` to confirm still green.
+Then update `src/tools/readTools.ts` to import `withDriftHandling` from `./helpers.js` and delete its local copy. Run `pnpm test src/tools/readTools.test.ts` to confirm still green.
 
 - [ ] **Step 2: Write the failing test `src/tools/writeTools.test.ts`**
 
@@ -1283,7 +1295,7 @@ describe("writeTools", () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `npm test src/tools/writeTools.test.ts`
+Run: `pnpm test src/tools/writeTools.test.ts`
 Expected: FAIL — cannot resolve `./writeTools.js`.
 
 - [ ] **Step 4: Implement `src/tools/writeTools.ts`**
@@ -1356,7 +1368,7 @@ export function writeTools(rest: RestClient, cache: SchemaCache): ToolDef[] {
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `npm test src/tools/writeTools.test.ts src/tools/readTools.test.ts`
+Run: `pnpm test src/tools/writeTools.test.ts src/tools/readTools.test.ts`
 Expected: PASS (both files).
 
 - [ ] **Step 6: Commit**
@@ -1415,7 +1427,7 @@ describe("GraphQLClient", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test src/twenty/graphqlClient.test.ts`
+Run: `pnpm test src/twenty/graphqlClient.test.ts`
 Expected: FAIL — cannot resolve `./graphqlClient.js`.
 
 - [ ] **Step 3: Implement `src/twenty/graphqlClient.ts`**
@@ -1455,7 +1467,7 @@ export class GraphQLClient {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npm test src/twenty/graphqlClient.test.ts`
+Run: `pnpm test src/twenty/graphqlClient.test.ts`
 Expected: PASS.
 
 - [ ] **Step 5: Write the failing test `src/tools/upsertTool.test.ts`**
@@ -1499,7 +1511,7 @@ describe("upsert_records", () => {
 
 - [ ] **Step 6: Run test to verify it fails**
 
-Run: `npm test src/tools/upsertTool.test.ts`
+Run: `pnpm test src/tools/upsertTool.test.ts`
 Expected: FAIL — cannot resolve `./upsertTool.js`.
 
 - [ ] **Step 7: Implement `src/tools/upsertTool.ts`**
@@ -1545,7 +1557,7 @@ export function upsertTool(gql: GraphQLClient, cache: SchemaCache): ToolDef {
 
 - [ ] **Step 8: Run test to verify it passes**
 
-Run: `npm test src/tools/upsertTool.test.ts`
+Run: `pnpm test src/tools/upsertTool.test.ts`
 Expected: PASS.
 
 - [ ] **Step 9: Commit**
@@ -1602,7 +1614,7 @@ describe("buildTools", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test src/server.test.ts`
+Run: `pnpm test src/server.test.ts`
 Expected: FAIL — cannot resolve `./server.js`.
 
 - [ ] **Step 3: Implement `src/server.ts`** (verify exact SDK registration API against `@modelcontextprotocol/sdk` docs via Context7 before writing; the shape below matches the current high-level `McpServer` API)
@@ -1695,7 +1707,7 @@ main().catch((err) => {
 
 - [ ] **Step 5: Run test + build to verify both pass**
 
-Run: `npm test src/server.test.ts && npm run build`
+Run: `pnpm test src/server.test.ts && pnpm build`
 Expected: test PASS; build emits `dist/index.js`.
 
 - [ ] **Step 6: Smoke-test the binary starts and lists tools over stdio**
@@ -1835,7 +1847,7 @@ maybe("live Twenty instance", () => {
 
 - [ ] **Step 3: Run the integration suite against the live instance**
 
-Run: `TWENTY_BASE_URL=… TWENTY_API_KEY=… npm run test:integration`
+Run: `TWENTY_BASE_URL=… TWENTY_API_KEY=… ppnpm test:integration`
 Expected: PASS. If `search` or any envelope differs from assumptions in Tasks 8/10, fix the corresponding handler + its unit test, then re-run.
 
 - [ ] **Step 4: Record findings in `docs/twenty-api-contract.md`**
@@ -1870,12 +1882,12 @@ git commit -m "test: env-gated live integration suite + verified API contract do
 
 - [ ] **Step 4: Final full test + build**
 
-Run: `npm test && npm run build`
+Run: `pnpm test && pnpm build`
 Expected: all unit tests PASS; build emits `dist/index.js`.
 
 - [ ] **Step 5: Verify the published file list**
 
-Run: `npm pack --dry-run`
+Run: `pnpm pack` then inspect with `tar -tzf twentycrm-mcp-*.tgz` (delete the tarball after).
 Expected: tarball includes `dist/`, `skill/`, `README.md`, `LICENSE` — and NOT `.env`, `tests/`, or `src/`.
 
 - [ ] **Step 6: Commit**
