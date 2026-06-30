@@ -7,7 +7,11 @@ import { schemaTools, type ToolDef } from "./tools/schemaTools.js";
 import { readTools } from "./tools/readTools.js";
 import { writeTools } from "./tools/writeTools.js";
 import { upsertTool } from "./tools/upsertTool.js";
-import { SERVER_NAME, SERVER_VERSION } from "./version.js";
+
+export interface ServerMeta {
+  name: string;
+  version: string;
+}
 
 export function buildTools(
   rest: RestClient,
@@ -30,12 +34,13 @@ export function buildTools(
 
 export function createServer(
   config: TwentyConfig,
+  meta: ServerMeta,
   fetchImpl: typeof fetch = fetch,
 ): { server: McpServer; cache: SchemaCache } {
   const rest = new RestClient(config, fetchImpl);
   const gql = new GraphQLClient(config, fetchImpl);
   const cache = new SchemaCache(rest);
-  const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION });
+  const server = new McpServer({ name: meta.name, version: meta.version });
 
   for (const tool of buildTools(rest, gql, cache)) {
     server.registerTool(
