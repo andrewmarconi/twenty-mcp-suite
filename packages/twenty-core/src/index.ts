@@ -14,8 +14,6 @@ export { writeTools } from "./tools/writeTools.js";
 export { upsertTool } from "./tools/upsertTool.js";
 export { buildTools, createServer } from "./server.js";
 export type { ServerMeta } from "./server.js";
-export { loadConfig } from "./config.js";
-export type { TwentyConfig } from "./config.js";
 export {
   legacyConnectionFromEnv,
   buildConnectionFromConfig,

@@ -3,13 +3,14 @@ import { buildTools } from "./server.js";
 import { RestClient } from "./twenty/restClient.js";
 import { GraphQLClient } from "./twenty/graphqlClient.js";
 import { SchemaCache } from "./schema/cache.js";
+import type { Connection } from "./auth/types.js";
 
-const cfg = { baseUrl: "https://x", apiKey: "k" };
+const conn: Connection = { label: "test", baseUrl: "https://x", getBearer: async () => "k" };
 
 describe("buildTools", () => {
   it("exposes the full unique tool set", () => {
-    const rest = new RestClient(cfg, vi.fn() as unknown as typeof fetch);
-    const gql = new GraphQLClient(cfg, vi.fn() as unknown as typeof fetch);
+    const rest = new RestClient(conn, vi.fn() as unknown as typeof fetch);
+    const gql = new GraphQLClient(conn, vi.fn() as unknown as typeof fetch);
     const cache = new SchemaCache(rest, vi.fn().mockResolvedValue([]));
     const names = buildTools(rest, gql, cache).map((t) => t.name).sort();
     expect(names).toEqual(

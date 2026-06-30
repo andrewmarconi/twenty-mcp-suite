@@ -1,11 +1,11 @@
-import type { TwentyConfig } from "../config.js";
+import type { Connection } from "../auth/types.js";
 import { TwentyApiError } from "./errors.js";
 
 type Query = Record<string, string | number | undefined>;
 
 export class RestClient {
   constructor(
-    private readonly config: TwentyConfig,
+    private readonly connection: Connection,
     private readonly fetchImpl: typeof fetch = fetch,
   ) {}
 
@@ -28,16 +28,17 @@ export class RestClient {
     body?: unknown,
     query?: Query,
   ): Promise<unknown> {
-    const url = new URL(this.config.baseUrl + path);
+    const url = new URL(this.connection.baseUrl + path);
     if (query) {
       for (const [k, v] of Object.entries(query)) {
         if (v !== undefined) url.searchParams.set(k, String(v));
       }
     }
+    const bearer = await this.connection.getBearer();
     const res = await this.fetchImpl(url.toString(), {
       method,
       headers: {
-        Authorization: `Bearer ${this.config.apiKey}`,
+        Authorization: `Bearer ${bearer}`,
         "Content-Type": "application/json",
       },
       body: body === undefined ? undefined : JSON.stringify(body),

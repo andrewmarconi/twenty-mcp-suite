@@ -1,8 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
 import { RestClient } from "./restClient.js";
 import { TwentyApiError } from "./errors.js";
+import type { Connection } from "../auth/types.js";
 
-const cfg = { baseUrl: "https://crm.example.com", apiKey: "k" };
+function conn(): Connection {
+  return {
+    label: "test",
+    baseUrl: "https://crm.example.com",
+    getBearer: async () => "k",
+  };
+}
 
 function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -14,7 +21,7 @@ function jsonResponse(status: number, body: unknown): Response {
 describe("RestClient", () => {
   it("builds the URL, sets auth header, and returns parsed JSON", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(200, { data: { people: [] } }));
-    const client = new RestClient(cfg, fetchImpl as unknown as typeof fetch);
+    const client = new RestClient(conn(), fetchImpl as unknown as typeof fetch);
 
     const result = await client.get("/rest/people", { limit: 10, cursor: undefined });
 
@@ -28,7 +35,7 @@ describe("RestClient", () => {
     const fetchImpl = vi
       .fn()
       .mockResolvedValue(jsonResponse(404, { messages: ["not found"] }));
-    const client = new RestClient(cfg, fetchImpl as unknown as typeof fetch);
+    const client = new RestClient(conn(), fetchImpl as unknown as typeof fetch);
 
     await expect(client.get("/rest/widgets")).rejects.toMatchObject({
       status: 404,
@@ -38,7 +45,7 @@ describe("RestClient", () => {
 
   it("sends a JSON body on post", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(201, { data: {} }));
-    const client = new RestClient(cfg, fetchImpl as unknown as typeof fetch);
+    const client = new RestClient(conn(), fetchImpl as unknown as typeof fetch);
 
     await client.post("/rest/people", { name: "Ada" });
 

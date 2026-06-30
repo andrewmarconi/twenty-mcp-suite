@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { TwentyConfig } from "./config.js";
+import type { Connection } from "./auth/types.js";
 import { RestClient } from "./twenty/restClient.js";
 import { GraphQLClient } from "./twenty/graphqlClient.js";
 import { SchemaCache } from "./schema/cache.js";
@@ -33,12 +33,12 @@ export function buildTools(
 }
 
 export function createServer(
-  config: TwentyConfig,
+  connection: Connection,
   meta: ServerMeta,
   fetchImpl: typeof fetch = fetch,
 ): { server: McpServer; cache: SchemaCache } {
-  const rest = new RestClient(config, fetchImpl);
-  const gql = new GraphQLClient(config, fetchImpl);
+  const rest = new RestClient(connection, fetchImpl);
+  const gql = new GraphQLClient(connection, fetchImpl);
   const cache = new SchemaCache(rest);
   const server = new McpServer({ name: meta.name, version: meta.version });
 

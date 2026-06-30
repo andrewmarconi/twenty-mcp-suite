@@ -1,18 +1,19 @@
-import type { TwentyConfig } from "../config.js";
+import type { Connection } from "../auth/types.js";
 import { TwentyApiError } from "./errors.js";
 
 export class GraphQLClient {
   constructor(
-    private readonly config: TwentyConfig,
+    private readonly connection: Connection,
     private readonly fetchImpl: typeof fetch = fetch,
   ) {}
 
   async request(query: string, variables: Record<string, unknown>): Promise<unknown> {
-    const url = `${this.config.baseUrl}/graphql`;
+    const url = `${this.connection.baseUrl}/graphql`;
+    const bearer = await this.connection.getBearer();
     const res = await this.fetchImpl(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${this.config.apiKey}`,
+        Authorization: `Bearer ${bearer}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ query, variables }),
