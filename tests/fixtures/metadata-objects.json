@@ -1,0 +1,47 @@
+{
+  "page1": {
+    "data": [
+      {
+        "nameSingular": "company",
+        "namePlural": "companies",
+        "labelSingular": "Company",
+        "labelPlural": "Companies",
+        "isActive": true,
+        "isSystem": false,
+        "isSearchable": true,
+        "fields": [
+          { "name": "name", "type": "TEXT", "isNullable": false, "isUnique": false, "isActive": true, "isSystem": false },
+          { "name": "deletedField", "type": "TEXT", "isNullable": true, "isUnique": false, "isActive": false, "isSystem": false }
+        ]
+      }
+    ],
+    "pageInfo": { "hasNextPage": true, "endCursor": "CURSOR_1" }
+  },
+  "page2": {
+    "data": [
+      {
+        "nameSingular": "person",
+        "namePlural": "people",
+        "labelSingular": "Person",
+        "labelPlural": "People",
+        "isActive": true,
+        "isSystem": false,
+        "isSearchable": true,
+        "fields": [
+          { "name": "emails", "type": "EMAILS", "isNullable": true, "isUnique": false, "isActive": true, "isSystem": false }
+        ]
+      },
+      {
+        "nameSingular": "oldThing",
+        "namePlural": "oldThings",
+        "labelSingular": "Old thing",
+        "labelPlural": "Old things",
+        "isActive": false,
+        "isSystem": false,
+        "isSearchable": false,
+        "fields": []
+      }
+    ],
+    "pageInfo": { "hasNextPage": false, "endCursor": "CURSOR_2" }
+  }
+}
