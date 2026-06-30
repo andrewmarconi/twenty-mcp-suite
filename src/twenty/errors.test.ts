@@ -29,6 +29,14 @@ describe("isSchemaDriftError", () => {
     expect(isSchemaDriftError(400, { messages: ["value too long"] })).toBe(false);
   });
 
+  it("does not treat a missing-record 400 as drift", () => {
+    expect(
+      isSchemaDriftError(400, {
+        messages: ['Related Company with id "abc" does not exist'],
+      }),
+    ).toBe(false);
+  });
+
   it("does not treat 401 as drift", () => {
     expect(isSchemaDriftError(401, {})).toBe(false);
   });

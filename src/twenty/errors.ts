@@ -11,7 +11,11 @@ export class TwentyApiError extends Error {
 }
 
 const DRIFT_PATTERNS = [
-  /does not exist/i,
+  // Scoped to schema-element keywords so data-validation 400s (e.g. a missing
+  // *record*: 'Related Company with id "abc" does not exist') aren't
+  // misrouted to refresh_schema. Confirm Twenty's exact schema-drift 400
+  // wording against a live instance (Task 13) and tighten/loosen as needed.
+  /(field|column|object|property|relation)[^.]*does not exist/i,
   /unknown (field|column|object)/i,
   /no such (field|column|object)/i,
   /cannot find object/i,
