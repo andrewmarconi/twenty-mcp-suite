@@ -1847,7 +1847,7 @@ maybe("live Twenty instance", () => {
 
 - [ ] **Step 3: Run the integration suite against the live instance**
 
-Run: `TWENTY_BASE_URL=… TWENTY_API_KEY=… ppnpm test:integration`
+Run: `TWENTY_BASE_URL=… TWENTY_API_KEY=… pnpm test:integration`
 Expected: PASS. If `search` or any envelope differs from assumptions in Tasks 8/10, fix the corresponding handler + its unit test, then re-run.
 
 - [ ] **Step 4: Record findings in `docs/twenty-api-contract.md`**
