@@ -16,3 +16,9 @@ export { buildTools, createServer } from "./server.js";
 export type { ServerMeta } from "./server.js";
 export { loadConfig } from "./config.js";
 export type { TwentyConfig } from "./config.js";
+export {
+  legacyConnectionFromEnv,
+  buildConnectionFromConfig,
+  resolveActiveConnection,
+} from "./auth/registry.js";
+export type { ConnectionConfig, RegistryFile } from "./auth/registry.js";
