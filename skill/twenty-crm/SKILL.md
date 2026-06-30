@@ -5,7 +5,7 @@ description: Use when interacting with Twenty CRM through the twentycrm-mcp serv
 
 # Working with Twenty CRM
 
-This server is metadata-driven: object and field names come from your live Twenty schema, not hardcoded. Object names are passed as a parameter to every tool.
+This server is metadata-driven: object and field names come from your live Twenty schema, not hardcoded. Most tools take an `object` parameter naming the target Twenty object. Exceptions: `list_object_types` and `refresh_schema` take no arguments, and `search` takes a `query` (and optional `limit`) instead of an `object`.
 
 ## Always do this first
 1. Call `list_object_types` to see what objects exist (built-in and custom).
@@ -16,6 +16,11 @@ This server is metadata-driven: object and field names come from your live Twent
 - Operators by field type: TEXT → eq, contains (use the documented operator names from `describe_object` types); NUMBER → eq, gt, lt, gte, lte; DATE_TIME → before/after/eq; BOOLEAN → is; relations → eq, isEmpty.
 - Combine conditions with `and`/`or` per Twenty's filter grammar.
 - Use `orderBy` like `createdAt[DescNullsLast]`, `limit` (max 60), `depth` (0–2) to include related records, and `cursor` for pagination.
+
+## Reading records
+- `query_records` — query with filters; see filter syntax above.
+- `get_record` — fetch a single record by id. Input: `{ object, id }`.
+- `search` — full-text search across searchable objects. Input: `{ query, limit? }` (no `object` parameter; searches multiple objects at once).
 
 ## Writing records
 - All write tools are batch-native: pass an array of 1–60 records, even for a single write.
