@@ -23,6 +23,10 @@ export function upsertTool(gql: GraphQLClient, cache: SchemaCache): ToolDef {
       const a = shape.parse(args);
       await cache.ensureLoaded();
       const obj = cache.resolve(a.object);
+      // PROVISIONAL: the generated mutation name (`create<Plural>`), the
+      // `<LabelSingular>CreateInput` type name casing, and the `upsert: true` argument
+      // shape are inferred from Twenty's GraphQL conventions, not yet confirmed against a
+      // live instance. Verify before relying on this and adjust if the real schema differs.
       const mutationName = upsertMutationName(obj.namePlural);
       const query = `mutation Upsert($data: [${obj.labelSingular.replace(/\s+/g, "")}CreateInput!]!) {
   ${mutationName}(data: $data, upsert: true) { id }

@@ -58,6 +58,9 @@ export function readTools(rest: RestClient, cache: SchemaCache): ToolDef[] {
         const a = z
           .object({ query: z.string(), limit: z.number().int().positive().max(60).optional() })
           .parse(args);
+        // PROVISIONAL: the /rest/search query params (`q`, `limit`) and response envelope
+        // are inferred, not yet confirmed against a live Twenty instance. Verify before
+        // relying on this shape; adjust here if Twenty's actual contract differs.
         return JSON.stringify(await rest.get("/rest/search", { q: a.query, limit: a.limit }));
       },
     },
