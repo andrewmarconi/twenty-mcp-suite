@@ -1,3 +1,5 @@
+export type { Connection, CredentialProvider } from "./auth/types.js";
+export { ApiKeyProvider } from "./auth/apiKeyProvider.js";
 export { RestClient } from "./twenty/restClient.js";
 export { GraphQLClient } from "./twenty/graphqlClient.js";
 export { TwentyApiError, isSchemaDriftError, driftHint } from "./twenty/errors.js";
