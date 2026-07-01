@@ -22,7 +22,12 @@ Changes are saved after each step, so quitting partway through keeps what you al
 
 ## The registry file
 
-`setup` reads and writes `~/.config/twenty-mcp/connections.json` (override the path with `TWENTY_MCP_CONFIG`, or the directory with `XDG_CONFIG_HOME`). You can also create or edit it by hand:
+`setup` reads and writes the registry at:
+
+- **macOS / Linux:** `~/.config/twenty-mcp/connections.json`
+- **Windows:** `C:\Users\<you>\.config\twenty-mcp\connections.json`
+
+The suite uses the same `.config` layout on every platform (it does not use `%APPDATA%`). Override the full file path with `TWENTY_MCP_CONFIG`, or the base directory with `XDG_CONFIG_HOME`. You can also create or edit the file by hand:
 
 ```json
 {
