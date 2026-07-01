@@ -1,0 +1,100 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+#
+# This workflow generates a SLSA level 3 provenance file for the published
+# `twenty-crm-mcp` npm package tarball. See https://slsa.dev and
+# https://github.com/slsa-framework/slsa-github-generator.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# DISABLED until we are ready to publish.
+#
+# This file is fully configured for the real artifact (the `twenty-crm-mcp`
+# package tarball) but is parked with a `.disabled` extension so GitHub Actions
+# ignores it (it only reads `*.yml` / `*.yaml`). To enable at publish time,
+# rename it back:
+#
+#     git mv .github/workflows/generator-generic-ossf-slsa3-publish.yml.disabled \
+#            .github/workflows/generator-generic-ossf-slsa3-publish.yml
+#
+# (It is disabled by extension rather than by commenting the body, because a
+# fully-commented workflow file is empty YAML, which GitHub flags as an
+# "invalid workflow file" in the Actions tab.)
+#
+# Notes for when you enable it:
+#   - `twenty-core` is private and bundled into `twenty-crm-mcp` (tsup
+#     noExternal), so the single published artifact is the twenty-crm-mcp
+#     tarball produced by `pnpm pack`.
+#   - The generator MUST be referenced by a version tag (not a commit SHA): it
+#     verifies its own provenance and refuses to run when pinned by SHA.
+#   - Alternative to consider: npm's native `npm publish --provenance` (needs
+#     id-token: write) publishes provenance to the npm registry directly, which
+#     may be simpler than attaching an in-toto file to a GitHub release.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: SLSA generic generator
+on:
+  workflow_dispatch:
+  release:
+    types: [created]
+
+# Least-privilege default token; the provenance job below elevates its own scope.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # only used by the release-asset upload step (release events)
+    outputs:
+      digests: ${{ steps.hash.outputs.digests }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Pack the twenty-crm-mcp package
+        run: pnpm --filter twenty-crm-mcp pack --pack-destination "${GITHUB_WORKSPACE}/dist-pack"
+
+      # Attach the packed tarball to the release so the provenance is
+      # verifiable against a downloadable artifact.
+      - name: Upload tarball as a release asset
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${GITHUB_WORKSPACE}"/dist-pack/*.tgz --clobber
+
+      - name: Generate provenance subjects
+        id: hash
+        run: |
+          set -euo pipefail
+          cd "${GITHUB_WORKSPACE}/dist-pack"
+          # List the artifacts the provenance will refer to (the packed tarball).
+          files=$(ls *.tgz)
+          # Generate the base64-encoded subjects for the generator.
+          echo "digests=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
+
+  provenance:
+    needs: [build]
+    permissions:
+      actions: read   # To read the workflow path.
+      id-token: write # To sign the provenance.
+      contents: write # To add assets to a release.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.digests }}"
+      upload-assets: true # Upload the provenance to the release.
