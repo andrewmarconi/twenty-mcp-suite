@@ -1,0 +1,1 @@
+{"nodes": [{"id": "github_workflows_slsa_provenance", "label": "SLSA generic generator workflow (level-3 provenance on release)", "file_type": "document", "source_file": ".github/workflows/generator-generic-ossf-slsa3-publish.yml", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}
