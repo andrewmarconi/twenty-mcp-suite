@@ -9,6 +9,7 @@ export default defineConfig({
     search: { provider: "local" },
     nav: [
       { text: "Guide", link: "/guide/introduction" },
+      { text: "Tools", link: "/tools/reference" },
       { text: "GitHub", link: "https://github.com/andrewmarconi/twenty-mcp-suite" },
     ],
     sidebar: {
@@ -20,6 +21,17 @@ export default defineConfig({
             { text: "Installation & Quickstart", link: "/guide/installation" },
             { text: "Authentication", link: "/guide/authentication" },
             { text: "Connections & multi-instance", link: "/guide/connections" },
+          ],
+        },
+      ],
+      "/tools/": [
+        {
+          text: "Tools",
+          items: [
+            { text: "Reference", link: "/tools/reference" },
+            { text: "Object scoping", link: "/tools/scoping" },
+            { text: "Composite reads", link: "/tools/composites" },
+            { text: "Auditing", link: "/tools/auditing" },
           ],
         },
       ],
