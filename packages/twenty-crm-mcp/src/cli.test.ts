@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { runCli } from "./cli.js";
+import { runCli, realSetupDeps } from "./cli.js";
+import { join } from "node:path";
 
 function deps(over: Record<string, unknown> = {}) {
   return {
@@ -71,5 +72,14 @@ describe("runCli", () => {
     const d = deps();
     await runCli(["frobnicate"], d as never);
     expect(d.err).toHaveBeenCalledWith(expect.stringMatching(/setup/));
+  });
+});
+
+describe("realSetupDeps — skill seam", () => {
+  it("resolves project/user destinations and the bundled source dir", () => {
+    const d = realSetupDeps({} as NodeJS.ProcessEnv);
+    expect(d.skill.projectDest).toBe(join(process.cwd(), ".claude", "skills", "twenty-crm"));
+    expect(d.skill.userDest.endsWith(join(".claude", "skills", "twenty-crm"))).toBe(true);
+    expect(d.skill.sourceDir.endsWith(join("skill", "twenty-crm"))).toBe(true);
   });
 });

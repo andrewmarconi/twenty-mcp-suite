@@ -18,6 +18,17 @@ function fakePrompts(answers: unknown[]) {
   };
 }
 
+function skillDep(over: Record<string, unknown> = {}) {
+  return {
+    sourceDir: "/pkg/skill/twenty-crm",
+    projectDest: "/proj/.claude/skills/twenty-crm",
+    userDest: "/home/.claude/skills/twenty-crm",
+    exists: () => true, // default: "already installed" — suppresses the proactive offer
+    install: vi.fn(),
+    ...over,
+  };
+}
+
 function deps(answers: unknown[], over: Record<string, unknown> = {}) {
   const saved: RegistryFile[] = [];
   return {
@@ -28,6 +39,7 @@ function deps(answers: unknown[], over: Record<string, unknown> = {}) {
       saveRegistry: (reg: RegistryFile) => { saved.push(reg); },
       store: { get: vi.fn(), set: vi.fn(), delete: vi.fn().mockResolvedValue(undefined), labels: vi.fn().mockResolvedValue([]) },
       login: vi.fn().mockResolvedValue(undefined),
+      skill: skillDep(),
       out: vi.fn(), err: vi.fn(),
       ...over,
     },
@@ -157,5 +169,74 @@ describe("runSetup — edit/remove/default", () => {
     );
     await runSetup(d as never);
     expect(saved.at(-1)!.defaultConnection).toBe("sandbox");
+  });
+});
+
+describe("runSetup — install skill", () => {
+  it("installs to the project scope when no skill exists yet", async () => {
+    // menu:skill, scope:project, menu:done
+    const { d } = deps(["skill", "project", "done"], { skill: skillDep({ exists: () => false }) });
+    const code = await runSetup(d as never);
+    expect(code).toBe(0);
+    expect(d.skill.install).toHaveBeenCalledWith("/pkg/skill/twenty-crm", "/proj/.claude/skills/twenty-crm");
+    expect(d.out).toHaveBeenCalledWith(expect.stringMatching(/Installed companion skill/));
+  });
+
+  it("installs to the user scope", async () => {
+    const { d } = deps(["skill", "user", "done"], { skill: skillDep({ exists: () => false }) });
+    await runSetup(d as never);
+    expect(d.skill.install).toHaveBeenCalledWith("/pkg/skill/twenty-crm", "/home/.claude/skills/twenty-crm");
+  });
+
+  it("overwrites an existing skill when confirmed", async () => {
+    // menu:skill, scope:project, confirm(overwrite):true, menu:done
+    const { d } = deps(["skill", "project", true, "done"], { skill: skillDep({ exists: () => true }) });
+    await runSetup(d as never);
+    expect(d.skill.install).toHaveBeenCalledWith("/pkg/skill/twenty-crm", "/proj/.claude/skills/twenty-crm");
+  });
+
+  it("skips install when an existing skill is not overwritten", async () => {
+    const { d } = deps(["skill", "project", false, "done"], { skill: skillDep({ exists: () => true }) });
+    await runSetup(d as never);
+    expect(d.skill.install).not.toHaveBeenCalled();
+  });
+
+  it("cancelling the scope prompt is a no-op", async () => {
+    // menu:skill, then empty queue -> scope select returns CANCEL, then menu CANCEL exits
+    const { d } = deps(["skill"], { skill: skillDep({ exists: () => false }) });
+    await runSetup(d as never);
+    expect(d.skill.install).not.toHaveBeenCalled();
+  });
+});
+
+describe("runSetup — proactive skill offer after first add", () => {
+  it("offers and installs the skill after adding a connection when none is installed", async () => {
+    // menu:add, label, baseUrl, auth:apikey, offer-confirm:true, scope:project, menu:done
+    const { d } = deps(
+      ["add", "acme", "https://crm.acme.com", "apikey", true, "project", "done"],
+      { skill: skillDep({ exists: () => false }) },
+    );
+    const code = await runSetup(d as never);
+    expect(code).toBe(0);
+    expect(d.skill.install).toHaveBeenCalledWith("/pkg/skill/twenty-crm", "/proj/.claude/skills/twenty-crm");
+  });
+
+  it("does not offer when a skill is already installed", async () => {
+    // default skillDep().exists === true -> no offer prompt is consumed
+    const { saved, d } = deps(["add", "acme", "https://crm.acme.com", "apikey", "done"]);
+    await runSetup(d as never);
+    expect(saved.at(-1)!.connections.acme).toBeDefined();
+    expect(d.skill.install).not.toHaveBeenCalled();
+  });
+
+  it("records the connection even when the offer is declined", async () => {
+    // menu:add, label, baseUrl, auth:apikey, offer-confirm:false, menu:done
+    const { saved, d } = deps(
+      ["add", "acme", "https://crm.acme.com", "apikey", false, "done"],
+      { skill: skillDep({ exists: () => false }) },
+    );
+    await runSetup(d as never);
+    expect(saved.at(-1)!.connections.acme).toBeDefined();
+    expect(d.skill.install).not.toHaveBeenCalled();
   });
 });

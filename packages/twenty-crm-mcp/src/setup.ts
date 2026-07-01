@@ -16,6 +16,13 @@ export interface SetupDeps {
   saveRegistry(reg: RegistryFile): void;
   store: TokenStore;
   login: typeof loginConnection;
+  skill: {
+    sourceDir: string;
+    projectDest: string;
+    userDest: string;
+    exists(dest: string): boolean;
+    install(src: string, dest: string): void;
+  };
   out(msg: string): void;
   err(msg: string): void;
 }
@@ -96,6 +103,13 @@ async function addSite(deps: SetupDeps, reg: RegistryFile): Promise<RegistryFile
         `(or TWENTY_API_KEY as a fallback)`,
       "API key",
     );
+  }
+
+  if (!deps.skill.exists(deps.skill.projectDest) && !deps.skill.exists(deps.skill.userDest)) {
+    const want = await p.confirm({ message: "Install the companion skill now? (recommended)" });
+    if (!p.isCancel(want) && want === true) {
+      await installSkillAction(deps);
+    }
   }
   return next;
 }
@@ -209,6 +223,32 @@ async function chooseDefault(deps: SetupDeps, reg: RegistryFile): Promise<Regist
   return next;
 }
 
+async function installSkillAction(deps: SetupDeps): Promise<void> {
+  const p = deps.prompts;
+  const scope = await p.select<"project" | "user">({
+    message: "Install the companion skill where?",
+    options: [
+      { value: "project", label: "Project", hint: deps.skill.projectDest },
+      { value: "user", label: "User", hint: deps.skill.userDest },
+    ],
+  });
+  if (p.isCancel(scope)) return;
+
+  const dest = scope === "project" ? deps.skill.projectDest : deps.skill.userDest;
+  if (deps.skill.exists(dest)) {
+    const ok = await p.confirm({
+      message: `A skill already exists at ${dest}. Overwrite? This replaces any local edits.`,
+    });
+    if (p.isCancel(ok) || ok !== true) {
+      p.note("Skipped.");
+      return;
+    }
+  }
+
+  deps.skill.install(deps.skill.sourceDir, dest);
+  deps.out(`Installed companion skill → ${dest}`);
+}
+
 export async function runSetup(deps: SetupDeps): Promise<number> {
   const p = deps.prompts;
   let reg: RegistryFile = deps.loadRegistry() ?? { connections: {} };
@@ -216,13 +256,14 @@ export async function runSetup(deps: SetupDeps): Promise<number> {
   p.intro("twenty-mcp setup");
 
   for (;;) {
-    const action = await p.select<"add" | "edit" | "remove" | "default" | "done">({
+    const action = await p.select<"add" | "edit" | "remove" | "default" | "skill" | "done">({
       message: "What would you like to do?",
       options: [
         { value: "add", label: "Add a site" },
         { value: "edit", label: "Edit a site" },
         { value: "remove", label: "Remove a site" },
         { value: "default", label: "Set default connection" },
+        { value: "skill", label: "Install companion skill" },
         { value: "done", label: "Done" },
       ],
     });
@@ -231,6 +272,7 @@ export async function runSetup(deps: SetupDeps): Promise<number> {
     else if (action === "edit") reg = await editSite(deps, reg);
     else if (action === "remove") reg = await removeSite(deps, reg);
     else if (action === "default") reg = await chooseDefault(deps, reg);
+    else if (action === "skill") await installSkillAction(deps);
   }
 
   printConnections(deps, reg);

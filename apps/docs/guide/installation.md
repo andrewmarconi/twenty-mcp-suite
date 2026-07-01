@@ -36,3 +36,15 @@ Add to your MCP config (`.mcp.json` or `claude_desktop_config.json`):
 ```
 
 To sign in as yourself instead of using a shared key, see [Authentication](/guide/authentication).
+
+## Companion Skill
+
+The server ships with a companion Skill that gives the model the operational knowledge to use it well (filter syntax, describe-before-write discipline, batch/upsert guidance, the `refresh_schema` recovery reflex). Install it with the interactive setup command:
+
+```bash
+twenty-mcp setup
+```
+
+`setup` offers to install the Skill right after you add your first connection, and also exposes an **Install companion skill** action in its menu. Choose a **project** (`./.claude/skills/twenty-crm`) or **user** (`~/.claude/skills/twenty-crm`) install; an existing copy is overwritten only after you confirm.
+
+Prefer to do it by hand? Copy `skill/twenty-crm` from the installed package (or a source checkout) into your `.claude/skills/` directory.

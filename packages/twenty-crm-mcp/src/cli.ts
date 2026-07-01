@@ -10,6 +10,10 @@ import {
 } from "twenty-core";
 import { runSetup, type SetupDeps } from "./setup.js";
 import { clackPrompts } from "./prompts.js";
+import { fileURLToPath } from "node:url";
+import { homedir } from "node:os";
+import { existsSync, mkdirSync, cpSync } from "node:fs";
+import { join, dirname } from "node:path";
 
 export interface CliDeps {
   store: TokenStore;
@@ -41,6 +45,16 @@ export function realSetupDeps(env: NodeJS.ProcessEnv): SetupDeps {
     saveRegistry: (reg) => saveRegistryFile(path, reg),
     store: new FileTokenStore(dir),
     login: loginConnection,
+    skill: {
+      sourceDir: fileURLToPath(new URL("../skill/twenty-crm", import.meta.url)),
+      projectDest: join(process.cwd(), ".claude", "skills", "twenty-crm"),
+      userDest: join(homedir(), ".claude", "skills", "twenty-crm"),
+      exists: (dest) => existsSync(dest),
+      install: (src, dest) => {
+        mkdirSync(dirname(dest), { recursive: true });
+        cpSync(src, dest, { recursive: true });
+      },
+    },
     out: (m) => console.log(m),
     err: (m) => console.error(m),
   };
