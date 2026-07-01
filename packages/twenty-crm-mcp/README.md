@@ -1,4 +1,4 @@
-# twentycrm-mcp
+# twenty-crm-mcp
 
 A version-resilient, metadata-driven [MCP](https://modelcontextprotocol.io) server for
 self-hosted [Twenty CRM](https://twenty.com). Instead of hardcoding object and field names,
@@ -18,7 +18,7 @@ Run directly with `npx` — no install step needed:
 ```bash
 TWENTY_BASE_URL="https://crm.example.com" \
 TWENTY_API_KEY="your-api-key" \
-npx twentycrm-mcp
+npx twenty-crm-mcp
 ```
 
 | Env var | Required | Description |
@@ -35,7 +35,7 @@ Add to your MCP server config (e.g. `.mcp.json` or `claude_desktop_config.json`)
   "mcpServers": {
     "twenty-crm": {
       "command": "npx",
-      "args": ["-y", "twentycrm-mcp"],
+      "args": ["-y", "twenty-crm-mcp"],
       "env": {
         "TWENTY_BASE_URL": "https://crm.example.com",
         "TWENTY_API_KEY": "your-api-key"
@@ -127,7 +127,7 @@ upsert guidance, and the `refresh_schema` recovery reflex for schema drift. Inst
 copying the skill directory into your project's or user's skills folder:
 
 ```bash
-cp -r node_modules/twentycrm-mcp/skill/twenty-crm .claude/skills/twenty-crm
+cp -r node_modules/twenty-crm-mcp/skill/twenty-crm .claude/skills/twenty-crm
 # or, if working from a clone of this repo:
 cp -r skill/twenty-crm .claude/skills/twenty-crm
 ```

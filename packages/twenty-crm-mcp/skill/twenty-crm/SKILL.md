@@ -1,6 +1,6 @@
 ---
 name: twenty-crm
-description: Use when interacting with Twenty CRM through the twentycrm-mcp server — querying, creating, updating, or upserting people, companies, notes, tasks, opportunities, or custom objects. Covers the filter syntax, the describe-before-write discipline, batch/upsert guidance, and the refresh_schema recovery reflex.
+description: Use when interacting with Twenty CRM through the twenty-crm-mcp server — querying, creating, updating, or upserting people, companies, notes, tasks, opportunities, or custom objects. Covers the filter syntax, the describe-before-write discipline, batch/upsert guidance, and the refresh_schema recovery reflex.
 ---
 
 # Working with Twenty CRM

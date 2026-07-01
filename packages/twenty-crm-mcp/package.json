@@ -6,6 +6,13 @@
   "description": "Version-resilient MCP server for self-hosted Twenty CRM",
   "author": "Andrew / Five59 Labs",
   "keywords": ["mcp", "twenty", "crm", "model-context-protocol"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrewmarconi/twenty-mcp-suite.git",
+    "directory": "packages/twenty-crm-mcp"
+  },
+  "homepage": "https://github.com/andrewmarconi/twenty-mcp-suite/tree/main/packages/twenty-crm-mcp#readme",
+  "bugs": { "url": "https://github.com/andrewmarconi/twenty-mcp-suite/issues" },
   "bin": {
     "twenty-crm-mcp": "dist/index.js",
     "twenty-mcp": "dist/cli-bin.js"
