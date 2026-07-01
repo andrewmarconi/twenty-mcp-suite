@@ -10,11 +10,12 @@ The following were confirmed against a running self-hosted instance:
 
 Other Twenty versions are likely to work given the API's stability and the discovery-driven OAuth, but have not been tested. If you hit a mismatch, please open an issue with the response Twenty actually returned.
 
-## Two provisional wire formats
+## Three provisional wire formats
 
-Two tool wire formats are inferred from documentation and **not yet exercised against a live instance**, so they may need adjustment:
+Three tool wire formats are inferred from documentation and **not yet exercised against a live instance**, so they may need adjustment:
 
 - **`search`** (`GET /rest/search`) — the exact query parameter names and response envelope are unverified.
 - **`upsert_records`** (GraphQL) — the generated mutation name casing (derived from the object's plural name) and the `upsert: true` argument shape are unverified.
+- **`aggregate`** (GraphQL) — the generated aggregation query shape (derived from the object's plural name and the requested ops) is unverified.
 
-Both call sites are marked `// PROVISIONAL` in `packages/twenty-core/src/tools/readTools.ts` and `packages/twenty-core/src/tools/upsertTool.ts`.
+All three call sites are marked `// PROVISIONAL` in `packages/twenty-core/src/tools/readTools.ts`, `packages/twenty-core/src/tools/upsertTool.ts`, and `packages/twenty-core/src/tools/aggregateTool.ts`.

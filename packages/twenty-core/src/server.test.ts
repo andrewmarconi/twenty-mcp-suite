@@ -16,7 +16,7 @@ describe("buildTools", () => {
     const names = buildTools(rest, gql, cache).map((t) => t.name).sort();
     expect(names).toEqual(
       [
-        "create_records", "delete_records", "describe_object", "get_record",
+        "aggregate", "create_records", "delete_records", "describe_object", "get_record",
         "list_object_types", "query_records", "refresh_schema", "search",
         "update_records", "upsert_records",
       ].sort(),
