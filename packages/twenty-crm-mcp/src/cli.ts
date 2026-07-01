@@ -1,17 +1,21 @@
 import {
   loginConnection,
   loadRegistryFile,
+  saveRegistryFile,
+  connectionsPath,
   FileTokenStore,
   defaultConfigDir,
   type TokenStore,
   type RegistryFile,
 } from "twenty-core";
-import { join } from "node:path";
+import { runSetup, type SetupDeps } from "./setup.js";
+import { clackPrompts } from "./prompts.js";
 
 export interface CliDeps {
   store: TokenStore;
   loadRegistry: () => RegistryFile | null;
   login: typeof loginConnection;
+  runSetup: () => Promise<number>;
   out: (msg: string) => void;
   err: (msg: string) => void;
 }
@@ -20,8 +24,22 @@ export function realDeps(env: NodeJS.ProcessEnv): CliDeps {
   const dir = defaultConfigDir(env);
   return {
     store: new FileTokenStore(dir),
-    loadRegistry: () =>
-      loadRegistryFile(env.TWENTY_MCP_CONFIG?.trim() ?? join(dir, "connections.json")),
+    loadRegistry: () => loadRegistryFile(connectionsPath(env)),
+    login: loginConnection,
+    runSetup: () => runSetup(realSetupDeps(env)),
+    out: (m) => console.log(m),
+    err: (m) => console.error(m),
+  };
+}
+
+export function realSetupDeps(env: NodeJS.ProcessEnv): SetupDeps {
+  const dir = defaultConfigDir(env);
+  const path = connectionsPath(env);
+  return {
+    prompts: clackPrompts(),
+    loadRegistry: () => loadRegistryFile(path),
+    saveRegistry: (reg) => saveRegistryFile(path, reg),
+    store: new FileTokenStore(dir),
     login: loginConnection,
     out: (m) => console.log(m),
     err: (m) => console.error(m),
@@ -29,7 +47,7 @@ export function realDeps(env: NodeJS.ProcessEnv): CliDeps {
 }
 
 const USAGE =
-  "usage: twenty-mcp <login <label> | connections | logout <label>>";
+  "usage: twenty-mcp <setup | login <label> | connections | logout <label>>";
 
 export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
   const [cmd, label] = argv;
@@ -74,6 +92,10 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
     await deps.store.delete(label);
     deps.out(`Logged out of "${label}".`);
     return 0;
+  }
+
+  if (cmd === "setup") {
+    return deps.runSetup();
   }
 
   deps.err(USAGE);

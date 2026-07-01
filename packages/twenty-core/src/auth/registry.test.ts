@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -7,6 +7,11 @@ import {
   buildConnectionFromConfig,
   resolveActiveConnection,
   loadRegistryFile,
+  saveRegistryFile,
+  upsertConnection,
+  removeConnection,
+  setDefaultConnection,
+  envKeyForLabel,
 } from "./registry.js";
 import type { RegistryFile } from "./registry.js";
 import type { TokenStore, TokenRecord } from "./tokenStore.js";
@@ -158,5 +163,59 @@ describe("oauth connections", () => {
       { registry, store: memStore(null) },
     );
     await expect(conn.getBearer()).rejects.toThrow(/twenty-mcp login acme-oauth/);
+  });
+});
+
+describe("registry mutators", () => {
+  it("saveRegistryFile writes JSON that loadRegistryFile round-trips, creating the dir", () => {
+    const dir = mkdtempSync(join(tmpdir(), "twenty-reg-"));
+    const path = join(dir, "nested", "connections.json");
+    const reg: RegistryFile = {
+      defaultConnection: "acme",
+      connections: { acme: { baseUrl: "https://crm.acme.com", auth: "oauth" } },
+    };
+    saveRegistryFile(path, reg);
+    expect(existsSync(path)).toBe(true);
+    expect(loadRegistryFile(path)).toEqual(reg);
+  });
+
+  it("upsertConnection adds and replaces without mutating the input", () => {
+    const reg: RegistryFile = { connections: {} };
+    const added = upsertConnection(reg, "acme", { baseUrl: "https://a.com", auth: "oauth" });
+    expect(added.connections.acme).toEqual({ baseUrl: "https://a.com", auth: "oauth" });
+    expect(reg.connections).toEqual({}); // input untouched
+    const replaced = upsertConnection(added, "acme", { baseUrl: "https://b.com", auth: "apikey" });
+    expect(replaced.connections.acme).toEqual({ baseUrl: "https://b.com", auth: "apikey" });
+  });
+
+  it("removeConnection deletes the label and clears defaultConnection when it pointed at it", () => {
+    const reg: RegistryFile = {
+      defaultConnection: "acme",
+      connections: { acme: { baseUrl: "https://a.com", auth: "oauth" } },
+    };
+    const next = removeConnection(reg, "acme");
+    expect(next.connections.acme).toBeUndefined();
+    expect(next.defaultConnection).toBeUndefined();
+  });
+
+  it("removeConnection keeps a default that points elsewhere", () => {
+    const reg: RegistryFile = {
+      defaultConnection: "keep",
+      connections: {
+        keep: { baseUrl: "https://k.com", auth: "oauth" },
+        drop: { baseUrl: "https://d.com", auth: "oauth" },
+      },
+    };
+    const next = removeConnection(reg, "drop");
+    expect(next.defaultConnection).toBe("keep");
+  });
+
+  it("setDefaultConnection sets the field", () => {
+    const reg: RegistryFile = { connections: { acme: { baseUrl: "https://a.com", auth: "oauth" } } };
+    expect(setDefaultConnection(reg, "acme").defaultConnection).toBe("acme");
+  });
+
+  it("envKeyForLabel upcases and hyphen->underscore", () => {
+    expect(envKeyForLabel("acme-dev")).toBe("TWENTY_API_KEY_ACME_DEV");
   });
 });

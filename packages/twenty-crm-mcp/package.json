@@ -5,20 +5,33 @@
   "license": "MIT",
   "description": "Version-resilient MCP server for self-hosted Twenty CRM",
   "author": "Andrew / Five59 Labs",
-  "keywords": ["mcp", "twenty", "crm", "model-context-protocol"],
+  "keywords": [
+    "mcp",
+    "twenty",
+    "crm",
+    "model-context-protocol"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/andrewmarconi/twenty-mcp-suite.git",
     "directory": "packages/twenty-crm-mcp"
   },
   "homepage": "https://github.com/andrewmarconi/twenty-mcp-suite/tree/main/packages/twenty-crm-mcp#readme",
-  "bugs": { "url": "https://github.com/andrewmarconi/twenty-mcp-suite/issues" },
+  "bugs": {
+    "url": "https://github.com/andrewmarconi/twenty-mcp-suite/issues"
+  },
   "bin": {
     "twenty-crm-mcp": "dist/index.js",
     "twenty-mcp": "dist/cli-bin.js"
   },
-  "files": ["dist", "skill", "README.md"],
-  "engines": { "node": ">=20" },
+  "files": [
+    "dist",
+    "skill",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -27,14 +40,15 @@
     "prepublishOnly": "tsup"
   },
   "dependencies": {
-    "twenty-core": "workspace:*",
+    "@clack/prompts": "^1.6.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "twenty-core": "workspace:*",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/node": "^26.0.1",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.9",
-    "@types/node": "^26.0.1"
+    "vitest": "^4.1.9"
   }
 }

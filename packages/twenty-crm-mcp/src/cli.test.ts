@@ -14,6 +14,7 @@ function deps(over: Record<string, unknown> = {}) {
       connections: { "acme-oauth": { baseUrl: "https://crm.acme.com", auth: "oauth" } },
     }),
     login: vi.fn().mockResolvedValue(undefined),
+    runSetup: vi.fn().mockResolvedValue(0),
     out: vi.fn(),
     err: vi.fn(),
     ...over,
@@ -57,5 +58,18 @@ describe("runCli", () => {
     const code = await runCli(["frobnicate"], d as never);
     expect(code).toBe(1);
     expect(d.err).toHaveBeenCalledWith(expect.stringMatching(/usage/i));
+  });
+
+  it("setup delegates to runSetup and returns its code", async () => {
+    const d = deps();
+    const code = await runCli(["setup"], d as never);
+    expect(code).toBe(0);
+    expect(d.runSetup).toHaveBeenCalled();
+  });
+
+  it("usage error mentions setup", async () => {
+    const d = deps();
+    await runCli(["frobnicate"], d as never);
+    expect(d.err).toHaveBeenCalledWith(expect.stringMatching(/setup/));
   });
 });
