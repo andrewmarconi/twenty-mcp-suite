@@ -23,6 +23,11 @@ export {
   buildConnectionFromConfig,
   resolveActiveConnection,
   loadRegistryFile,
+  saveRegistryFile,
+  upsertConnection,
+  removeConnection,
+  setDefaultConnection,
+  envKeyForLabel,
 } from "./auth/registry.js";
 export type { ConnectionConfig, RegistryFile } from "./auth/registry.js";
 export {
