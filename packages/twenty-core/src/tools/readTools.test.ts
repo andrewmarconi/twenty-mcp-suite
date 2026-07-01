@@ -27,10 +27,16 @@ describe("readTools", () => {
     });
   });
 
-  it("get_record fetches by id", async () => {
+  it("get_record fetches by id (no depth → depth omitted)", async () => {
     const rest = { get: vi.fn().mockResolvedValue({ data: { person: { id: "1" } } }) };
     await tool("get_record", rest).handler({ object: "people", id: "1" });
-    expect(rest.get).toHaveBeenCalledWith("/rest/people/1");
+    expect(rest.get).toHaveBeenCalledWith("/rest/people/1", { depth: undefined });
+  });
+
+  it("get_record forwards depth as a query param", async () => {
+    const rest = { get: vi.fn().mockResolvedValue({ data: { person: { id: "1", company: {} } } }) };
+    await tool("get_record", rest).handler({ object: "people", id: "1", depth: 1 });
+    expect(rest.get).toHaveBeenCalledWith("/rest/people/1", { depth: 1 });
   });
 
   it("maps a drift error into a refresh_schema hint", async () => {

@@ -39,14 +39,25 @@ export function readTools(rest: RestClient, cache: SchemaCache): ToolDef[] {
     },
     {
       name: "get_record",
-      description: "Fetch a single record by id.",
-      inputSchema: z.object({ object: z.string(), id: z.string() }),
+      description:
+        "Fetch a single record by id. Optional depth (0–2) inlines related records one/two levels deep.",
+      inputSchema: z.object({
+        object: z.string(),
+        id: z.string(),
+        depth: z.number().int().min(0).max(2).optional(),
+      }),
       handler: async (args) => {
-        const a = z.object({ object: z.string(), id: z.string() }).parse(args);
+        const a = z
+          .object({
+            object: z.string(),
+            id: z.string(),
+            depth: z.number().int().min(0).max(2).optional(),
+          })
+          .parse(args);
         await cache.ensureLoaded();
         const obj = cache.resolve(a.object);
         return withDriftHandling(a.object, async () =>
-          JSON.stringify(await rest.get(`/rest/${obj.namePlural}/${a.id}`)),
+          JSON.stringify(await rest.get(`/rest/${obj.namePlural}/${a.id}`, { depth: a.depth })),
         );
       },
     },
