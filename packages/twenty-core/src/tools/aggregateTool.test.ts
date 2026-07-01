@@ -1,6 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { buildAggregateQuery, aggregationAlias } from "./aggregateTool.js";
+import { describe, it, expect, vi } from "vitest";
+import { buildAggregateQuery, aggregationAlias, aggregateTool } from "./aggregateTool.js";
 import type { ObjectSchema } from "../schema/types.js";
+import { SchemaCache } from "../schema/cache.js";
+import { TwentyApiError } from "../twenty/errors.js";
 
 const opportunities: ObjectSchema = {
   nameSingular: "opportunity", namePlural: "opportunities",
@@ -75,5 +77,87 @@ describe("buildAggregateQuery", () => {
       aggregations: [{ op: "avg", field: "amount", alias: "avgDeal" }],
     });
     expect(query).toContain("avgDeal: amount { avg }");
+  });
+});
+
+function cache() {
+  return new SchemaCache({} as never, vi.fn().mockResolvedValue([opportunities]));
+}
+
+describe("aggregate tool", () => {
+  it("resolves the object and issues one GraphQL request, returning its data as JSON", async () => {
+    const data = { opportunities: { count: 3 } };
+    const gql = { request: vi.fn().mockResolvedValue(data) };
+    const tool = aggregateTool(gql as never, cache());
+    const out = JSON.parse(await tool.handler({ object: "opportunities", aggregations: [{ op: "count" }] }));
+    expect(gql.request).toHaveBeenCalledTimes(1);
+    expect(out).toEqual(data);
+  });
+
+  it("accepts a fieldless count", async () => {
+    const gql = { request: vi.fn().mockResolvedValue({}) };
+    const tool = aggregateTool(gql as never, cache());
+    await expect(
+      tool.handler({ object: "opportunities", aggregations: [{ op: "count" }] }),
+    ).resolves.toBeTypeOf("string");
+  });
+
+  it("throws on an unknown object and makes no GraphQL call", async () => {
+    const gql = { request: vi.fn() };
+    const tool = aggregateTool(gql as never, cache());
+    await expect(
+      tool.handler({ object: "nope", aggregations: [{ op: "count" }] }),
+    ).rejects.toThrow(/nope/);
+    expect(gql.request).not.toHaveBeenCalled();
+  });
+
+  it("throws on an unknown aggregation field and makes no GraphQL call", async () => {
+    const gql = { request: vi.fn() };
+    const tool = aggregateTool(gql as never, cache());
+    await expect(
+      tool.handler({ object: "opportunities", aggregations: [{ op: "sum", field: "bogus" }] }),
+    ).rejects.toThrow(/bogus/);
+    expect(gql.request).not.toHaveBeenCalled();
+  });
+
+  it("throws on an unknown groupBy field and makes no GraphQL call", async () => {
+    const gql = { request: vi.fn() };
+    const tool = aggregateTool(gql as never, cache());
+    await expect(
+      tool.handler({ object: "opportunities", aggregations: [{ op: "count" }], groupBy: "bogus" }),
+    ).rejects.toThrow(/bogus/);
+    expect(gql.request).not.toHaveBeenCalled();
+  });
+
+  it("throws when a non-count op has no field", async () => {
+    const gql = { request: vi.fn() };
+    const tool = aggregateTool(gql as never, cache());
+    await expect(
+      tool.handler({ object: "opportunities", aggregations: [{ op: "sum" }] }),
+    ).rejects.toThrow(/requires a field/);
+    expect(gql.request).not.toHaveBeenCalled();
+  });
+
+  it("rethrows a drift-shaped GraphQL error with a refresh_schema hint", async () => {
+    const gql = {
+      request: vi
+        .fn()
+        .mockRejectedValue(
+          new TwentyApiError("boom", 404, { messages: ["cannot find object opportunities"] }, "https://x/graphql"),
+        ),
+    };
+    const tool = aggregateTool(gql as never, cache());
+    await expect(
+      tool.handler({ object: "opportunities", aggregations: [{ op: "count" }] }),
+    ).rejects.toThrow(/refresh_schema/);
+  });
+
+  it("rejects a bad op at parse time", async () => {
+    const gql = { request: vi.fn() };
+    const tool = aggregateTool(gql as never, cache());
+    await expect(
+      tool.handler({ object: "opportunities", aggregations: [{ op: "median", field: "amount" }] }),
+    ).rejects.toThrow();
+    expect(gql.request).not.toHaveBeenCalled();
   });
 });

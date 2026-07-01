@@ -1,4 +1,9 @@
+import { z } from "zod";
 import type { ObjectSchema } from "../schema/types.js";
+import type { GraphQLClient } from "../twenty/graphqlClient.js";
+import type { SchemaCache } from "../schema/cache.js";
+import type { ToolDef } from "./schemaTools.js";
+import { withDriftHandling } from "./helpers.js";
 
 export const AGG_OPS = [
   "count", "sum", "avg", "min", "max", "earliest", "latest", "countTrue", "countFalse",
@@ -64,4 +69,59 @@ export function buildAggregateQuery(
   }
 }`;
   return { query, variables: filter ? { filter } : {} };
+}
+
+const aggregateShape = z.object({
+  object: z.string(),
+  aggregations: z
+    .array(
+      z.object({
+        op: z.enum(AGG_OPS),
+        field: z.string().optional(),
+        alias: z.string().optional(),
+      }),
+    )
+    .min(1)
+    .max(20),
+  groupBy: z.string().optional(),
+  filter: z.string().optional(),
+});
+
+export function aggregateTool(gql: GraphQLClient, cache: SchemaCache): ToolDef {
+  return {
+    name: "aggregate",
+    description:
+      "Aggregate over one object: count rows and compute sum/avg/min/max (number fields), " +
+      "earliest/latest (date fields), or countTrue/countFalse (boolean fields), optionally " +
+      "grouped by one field and filtered. Filter syntax: field[operator]:value, e.g. " +
+      "stage[eq]:NEW. Each aggregation is {op, field?, alias?}; only count may omit field.",
+    inputSchema: aggregateShape,
+    handler: async (args) => {
+      const a = aggregateShape.parse(args);
+      await cache.ensureLoaded();
+      const obj = cache.resolve(a.object);
+
+      const fieldNames = new Set(obj.fields.map((f) => f.name));
+      for (const agg of a.aggregations) {
+        if (agg.op !== "count" && !agg.field) {
+          throw new Error(`Aggregation "${agg.op}" requires a field.`);
+        }
+        if (agg.field && !fieldNames.has(agg.field)) {
+          throw new Error(`Unknown field "${agg.field}" on object "${a.object}".`);
+        }
+      }
+      if (a.groupBy && !fieldNames.has(a.groupBy)) {
+        throw new Error(`Unknown groupBy field "${a.groupBy}" on object "${a.object}".`);
+      }
+
+      const { query, variables } = buildAggregateQuery(obj, {
+        aggregations: a.aggregations,
+        groupBy: a.groupBy,
+        filter: a.filter,
+      });
+      return withDriftHandling(a.object, async () =>
+        JSON.stringify(await gql.request(query, variables)),
+      );
+    },
+  };
 }
