@@ -5,6 +5,7 @@ export default defineConfig({
   description: "Version-resilient MCP server suite for self-hosted Twenty CRM.",
   base: "/twenty-mcp-suite/",
   cleanUrls: true,
+  srcExclude: ["README.md"],
   themeConfig: {
     search: { provider: "local" },
     nav: [
