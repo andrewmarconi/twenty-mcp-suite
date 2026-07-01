@@ -28,6 +28,7 @@ export {
   removeConnection,
   setDefaultConnection,
   envKeyForLabel,
+  connectionsPath,
 } from "./auth/registry.js";
 export type { ConnectionConfig, RegistryFile } from "./auth/registry.js";
 export {

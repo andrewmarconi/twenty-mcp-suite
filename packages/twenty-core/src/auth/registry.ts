@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, mkdirSync, writeFileSync, chmodSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { ApiKeyProvider } from "./apiKeyProvider.js";
 import { OAuthProvider } from "./oauthProvider.js";
@@ -36,6 +36,10 @@ export function legacyConnectionFromEnv(env: NodeJS.ProcessEnv): Connection | nu
   };
 }
 
+export function connectionsPath(env: NodeJS.ProcessEnv): string {
+  return env.TWENTY_MCP_CONFIG?.trim() ?? join(defaultConfigDir(env), "connections.json");
+}
+
 export function loadRegistryFile(path: string): RegistryFile | null {
   if (!existsSync(path)) return null;
   return JSON.parse(readFileSync(path, "utf8")) as RegistryFile;
@@ -44,6 +48,7 @@ export function loadRegistryFile(path: string): RegistryFile | null {
 export function saveRegistryFile(path: string, reg: RegistryFile): void {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, JSON.stringify(reg, null, 2), { mode: 0o600 });
+  chmodSync(path, 0o600);
 }
 
 export function upsertConnection(
@@ -106,12 +111,7 @@ export function resolveActiveConnection(
   opts?: { registry?: RegistryFile; store?: TokenStore; configPath?: string },
 ): Connection {
   const registry =
-    opts?.registry ??
-    loadRegistryFile(
-      opts?.configPath ??
-        env.TWENTY_MCP_CONFIG?.trim() ??
-        join(defaultConfigDir(env), "connections.json"),
-    );
+    opts?.registry ?? loadRegistryFile(opts?.configPath ?? connectionsPath(env));
 
   if (registry) {
     const label = env.TWENTY_CONNECTION?.trim() || registry.defaultConnection;

@@ -2,12 +2,12 @@ import {
   loginConnection,
   loadRegistryFile,
   saveRegistryFile,
+  connectionsPath,
   FileTokenStore,
   defaultConfigDir,
   type TokenStore,
   type RegistryFile,
 } from "twenty-core";
-import { join } from "node:path";
 import { runSetup, type SetupDeps } from "./setup.js";
 import { clackPrompts } from "./prompts.js";
 
@@ -15,7 +15,7 @@ export interface CliDeps {
   store: TokenStore;
   loadRegistry: () => RegistryFile | null;
   login: typeof loginConnection;
-  runSetup: (deps: SetupDeps) => Promise<number>;
+  runSetup: () => Promise<number>;
   out: (msg: string) => void;
   err: (msg: string) => void;
 }
@@ -24,10 +24,9 @@ export function realDeps(env: NodeJS.ProcessEnv): CliDeps {
   const dir = defaultConfigDir(env);
   return {
     store: new FileTokenStore(dir),
-    loadRegistry: () =>
-      loadRegistryFile(env.TWENTY_MCP_CONFIG?.trim() ?? join(dir, "connections.json")),
+    loadRegistry: () => loadRegistryFile(connectionsPath(env)),
     login: loginConnection,
-    runSetup: (setupDeps) => runSetup(setupDeps),
+    runSetup: () => runSetup(realSetupDeps(env)),
     out: (m) => console.log(m),
     err: (m) => console.error(m),
   };
@@ -35,7 +34,7 @@ export function realDeps(env: NodeJS.ProcessEnv): CliDeps {
 
 export function realSetupDeps(env: NodeJS.ProcessEnv): SetupDeps {
   const dir = defaultConfigDir(env);
-  const path = env.TWENTY_MCP_CONFIG?.trim() ?? join(dir, "connections.json");
+  const path = connectionsPath(env);
   return {
     prompts: clackPrompts(),
     loadRegistry: () => loadRegistryFile(path),
@@ -96,7 +95,7 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
   }
 
   if (cmd === "setup") {
-    return deps.runSetup(realSetupDeps(process.env));
+    return deps.runSetup();
   }
 
   deps.err(USAGE);

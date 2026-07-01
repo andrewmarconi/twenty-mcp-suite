@@ -126,6 +126,27 @@ describe("runSetup — edit/remove/default", () => {
     // no save happened for the decline; final registry still has sandbox
     const anySavedWithoutSandbox = saved.some((r) => !r.connections.sandbox);
     expect(anySavedWithoutSandbox).toBe(false);
+    expect(saved).toHaveLength(0);
+    expect(d.store.delete).not.toHaveBeenCalled();
+  });
+
+  it("edit on an empty registry writes nothing", async () => {
+    const { saved, d } = deps(["edit", "done"], { loadRegistry: () => ({ connections: {} }) });
+    const code = await runSetup(d as never);
+    expect(code).toBe(0);
+    expect(saved).toHaveLength(0);
+  });
+
+  it("remove on an empty registry writes nothing", async () => {
+    const { saved, d } = deps(["remove", "done"], { loadRegistry: () => ({ connections: {} }) });
+    expect(await runSetup(d as never)).toBe(0);
+    expect(saved).toHaveLength(0);
+  });
+
+  it("set-default on an empty registry writes nothing", async () => {
+    const { saved, d } = deps(["default", "done"], { loadRegistry: () => ({ connections: {} }) });
+    expect(await runSetup(d as never)).toBe(0);
+    expect(saved).toHaveLength(0);
   });
 
   it("sets the default connection", async () => {
