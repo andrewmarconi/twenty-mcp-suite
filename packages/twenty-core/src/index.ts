@@ -39,3 +39,5 @@ export { loginConnection } from "./auth/loginFlow.js";
 export type { LoginDeps } from "./auth/loginFlow.js";
 export { buildProfileTools } from "./profile/buildProfileTools.js";
 export type { CapabilityProfile, ProfileToolSpec } from "./profile/types.js";
+export { auditWrap, withAudit, stderrAuditSink } from "./audit/audit.js";
+export type { AuditEntry, AuditSink } from "./audit/audit.js";

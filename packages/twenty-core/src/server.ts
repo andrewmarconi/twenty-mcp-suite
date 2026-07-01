@@ -9,6 +9,7 @@ import { writeTools } from "./tools/writeTools.js";
 import { upsertTool } from "./tools/upsertTool.js";
 import type { CapabilityProfile } from "./profile/types.js";
 import { buildProfileTools } from "./profile/buildProfileTools.js";
+import { withAudit } from "./audit/audit.js";
 
 export interface ServerMeta {
   name: string;
@@ -85,7 +86,11 @@ export function createServer(
   const gql = new GraphQLClient(connection, fetchImpl);
   const cache = new SchemaCache(rest);
   const server = new McpServer({ name: meta.name, version: meta.version });
-  wireServer(server, buildTools(rest, gql, cache), cache);
+  const tools = withAudit(buildTools(rest, gql, cache), {
+    connection: connection.label,
+    env: connection.env,
+  });
+  wireServer(server, tools, cache);
   return { server, cache };
 }
 
@@ -100,6 +105,10 @@ export function createSegmentServer(
   const cache = new SchemaCache(rest);
   const server = new McpServer({ name: meta.name, version: meta.version });
   const primitives = buildTools(rest, gql, cache);
-  wireServer(server, buildProfileTools(profile, primitives, cache), cache, profile.objectScope);
+  const tools = withAudit(buildProfileTools(profile, primitives, cache), {
+    connection: connection.label,
+    env: connection.env,
+  });
+  wireServer(server, tools, cache, profile.objectScope);
   return { server, cache };
 }
