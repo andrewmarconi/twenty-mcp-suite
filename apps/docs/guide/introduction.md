@@ -1,6 +1,6 @@
 # Introduction
 
-`twenty-crm-mcp` is a version-resilient, metadata-driven [MCP](https://modelcontextprotocol.io) server for self-hosted [Twenty CRM](https://twenty.com). It connects an AI assistant to your CRM data through a small, curated set of tools that resolve against your **live** Twenty schema — so your custom objects and fields work out of the box, and a Twenty upgrade never requires a code release.
+`twenty-crm-mcp` is a schema-adaptable, metadata-driven [MCP](https://modelcontextprotocol.io) server for self-hosted [Twenty CRM](https://twenty.com). It connects an AI assistant to your CRM data through a small, curated set of tools that resolve against your **live** Twenty schema — so your custom objects and fields work out of the box, and a Twenty upgrade never requires a code release.
 
 It is the CRM segment of the **twenty-mcp-suite** monorepo. The reusable engine (transport, schema cache, generic primitives, authentication) lives in `twenty-core`; this package composes a role-scoped CRM surface over it.
 

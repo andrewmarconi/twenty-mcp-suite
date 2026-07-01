@@ -5,7 +5,7 @@ Canonical guidance for AI coding agents (Claude Code, Codex, Cursor, etc.) worki
 
 ## What this is
 
-A **version-resilient MCP server suite for self-hosted Twenty CRM**, published to npm and run via
+A **schema-adaptable MCP server suite for self-hosted Twenty CRM**, published to npm and run via
 `npx` over **stdio** transport. The whole point is resilience to Twenty schema/version changes: tools
 are generic and metadata-driven, so a Twenty upgrade, new field, or custom object is handled by a
 runtime `refresh_schema` call or a Skill edit — never a code release. Validated against self-hosted

@@ -2,7 +2,7 @@ import { defineConfig } from "vitepress";
 
 export default defineConfig({
   title: "Twenty MCP Suite",
-  description: "Version-resilient MCP server suite for self-hosted Twenty CRM.",
+  description: "Schema-adaptable MCP server suite for self-hosted Twenty CRM.",
   base: "/twenty-mcp-suite/",
   cleanUrls: true,
   srcExclude: ["README.md"],

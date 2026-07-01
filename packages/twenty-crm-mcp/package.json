@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "license": "MIT",
-  "description": "Version-resilient MCP server for self-hosted Twenty CRM",
+  "description": "Schema-adaptable MCP server for self-hosted Twenty CRM",
   "author": "Andrew / Five59 Labs",
   "keywords": [
     "mcp",

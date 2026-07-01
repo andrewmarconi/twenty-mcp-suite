@@ -3,7 +3,7 @@ layout: home
 hero:
   name: Twenty MCP Suite
   text: Self-hosted Twenty CRM, AI-operable
-  tagline: A version-resilient MCP server that acts as you, scoped to your Twenty role.
+  tagline: A schema-adaptable MCP server that acts as you, scoped to your Twenty role.
   actions:
     - theme: brand
       text: Get started
@@ -15,7 +15,7 @@ hero:
       text: GitHub
       link: https://github.com/andrewmarconi/twenty-mcp-suite
 features:
-  - title: Version-resilient
+  - title: Schema-adaptable
     details: Metadata-driven — reads your live Twenty schema, so custom objects work out of the box and a Twenty upgrade never needs a code release.
   - title: Sign in as yourself
     details: Browser OAuth (PKCE, endpoint discovery) so the assistant inherits your Twenty role. API-key mode too, when you want it simple.
