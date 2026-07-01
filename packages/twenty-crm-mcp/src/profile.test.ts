@@ -35,6 +35,10 @@ describe("crmProfile", () => {
     // building did not throw → every `from` maps to a real primitive
   });
 
+  it("does not expose the aggregate primitive (analytics-only)", () => {
+    expect(crmProfile.tools.some((t) => t.from === "aggregate")).toBe(false);
+  });
+
   it("exposes depth-bound composite reads that take only an id", () => {
     const tools = buildProfileTools(crmProfile, corePrimitives(), cache);
     const brief = tools.find((t) => t.name === "get_contact_brief")!;

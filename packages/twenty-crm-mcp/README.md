@@ -194,7 +194,8 @@ cp -r packages/twenty-crm-mcp/skill/twenty-crm .claude/skills/twenty-crm
 ## Compatibility & caveats
 
 - **Validated live against self-hosted Twenty v2.17.2.** Confirmed against a running instance: OAuth sign-in (public/PKCE client, endpoint discovery), object-scoped curation (out-of-scope objects refused), and the `depth`-expanded composites (`get_contact_brief` / `get_account_snapshot`). Other versions are likely to work given Twenty's API stability and the discovery-driven OAuth, but have not been tested.
-- **Two wire formats remain provisional** — inferred from documentation and not yet exercised against a live instance, so they may need adjustment:
+- **Three wire formats remain provisional** — inferred from documentation and not yet exercised against a live instance, so they may need adjustment:
   - **`search`** (`GET /rest/search`) — the exact query parameter names and response envelope are unverified.
   - **`upsert_records`** (GraphQL) — the generated mutation name casing (derived from the object's plural name) and the `upsert: true` argument shape are unverified.
-  - Both call sites are marked `// PROVISIONAL` in `packages/twenty-core/src/tools/readTools.ts` and `packages/twenty-core/src/tools/upsertTool.ts`. If you hit a mismatch, please open an issue with the response Twenty actually returned.
+  - **`aggregate`** (GraphQL) — the generated aggregation query shape (derived from the object's plural name and the requested ops) is unverified.
+  - All three call sites are marked `// PROVISIONAL` in `packages/twenty-core/src/tools/readTools.ts`, `packages/twenty-core/src/tools/upsertTool.ts`, and `packages/twenty-core/src/tools/aggregateTool.ts`. If you hit a mismatch, please open an issue with the response Twenty actually returned.

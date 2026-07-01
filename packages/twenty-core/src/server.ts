@@ -7,6 +7,7 @@ import { schemaTools, type ToolDef } from "./tools/schemaTools.js";
 import { readTools } from "./tools/readTools.js";
 import { writeTools } from "./tools/writeTools.js";
 import { upsertTool } from "./tools/upsertTool.js";
+import { aggregateTool } from "./tools/aggregateTool.js";
 import type { CapabilityProfile } from "./profile/types.js";
 import { buildProfileTools } from "./profile/buildProfileTools.js";
 import { withAudit } from "./audit/audit.js";
@@ -26,6 +27,7 @@ export function buildTools(
     ...readTools(rest, cache),
     ...writeTools(rest, cache),
     upsertTool(gql, cache),
+    aggregateTool(gql, cache),
   ];
   const seen = new Set<string>();
   for (const t of tools) {

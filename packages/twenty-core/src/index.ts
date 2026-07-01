@@ -16,6 +16,8 @@ export type { ToolDef } from "./tools/schemaTools.js";
 export { readTools } from "./tools/readTools.js";
 export { writeTools } from "./tools/writeTools.js";
 export { upsertTool } from "./tools/upsertTool.js";
+export { aggregateTool, buildAggregateQuery } from "./tools/aggregateTool.js";
+export type { AggOp, AggregationSpec } from "./tools/aggregateTool.js";
 export { buildTools, createServer, createSegmentServer } from "./server.js";
 export type { ServerMeta } from "./server.js";
 export {
