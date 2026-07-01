@@ -6,7 +6,19 @@ This is the "knowledge" half of the [mechanism-vs-knowledge](/architecture/overv
 
 ## Install
 
-Copy the skill directory into your project's or user's skills folder:
+The quickest way is the `setup` CLI. Pass a scope to install it non-interactively:
+
+```bash
+# into the current project (./.claude/skills/twenty-crm)
+npx -p twenty-crm-mcp twenty-mcp setup --install-skill --scope project
+
+# or for your user account (~/.claude/skills/twenty-crm)
+npx -p twenty-crm-mcp twenty-mcp setup --install-skill --scope user
+```
+
+This overwrites an existing copy without prompting. Interactive `setup` installs it too — it offers right after your first connection, and the **Install companion skill** menu action is always available (see [Installation](/guide/installation#set-up)).
+
+Prefer to copy it by hand? The skill is a plain directory:
 
 ```bash
 cp -r node_modules/twenty-crm-mcp/skill/twenty-crm .claude/skills/twenty-crm
