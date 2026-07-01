@@ -38,7 +38,7 @@ export function startLoopback(port: number): Promise<LoopbackServer> {
     server.on("error", reject);
     server.listen(port, "127.0.0.1", () => {
       resolve({
-        redirectUri: `http://localhost:${port}/callback`,
+        redirectUri: `http://127.0.0.1:${port}/callback`,
         waitForCode(expectedState: string): Promise<string> {
           return new Promise((res, rej) => {
             onResult = (r) => {
