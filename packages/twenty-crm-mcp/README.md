@@ -45,6 +45,62 @@ Add to your MCP server config (e.g. `.mcp.json` or `claude_desktop_config.json`)
 }
 ```
 
+## Authentication
+
+The server supports two ways to authenticate to Twenty; both resolve to a bearer token used
+identically against Twenty's API.
+
+### API key (simplest)
+
+Provide `TWENTY_BASE_URL` + `TWENTY_API_KEY` (a key created in Twenty under Settings > APIs &
+Webhooks), as in the Quickstart above. The assistant acts with that key's permissions.
+
+### OAuth sign-in (act as yourself, with your role)
+
+Sign in through your browser so the assistant acts as **you**, inheriting your Twenty role
+(object/field/row permissions enforced by Twenty) — no long-lived key to manage. It uses
+Twenty's OAuth 2.0 authorization-code + PKCE flow with dynamic client registration
+([RFC 7591](https://datatracker.ietf.org/doc/html/rfc7591)) and endpoint discovery
+([RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414)), so it adapts to your instance
+automatically — public or confidential client, whatever endpoints your version exposes.
+
+1. Create a connection registry at `~/.config/twenty-mcp/connections.json` (list one or more
+   instances; pick one per server run with `TWENTY_CONNECTION`):
+
+   ```json
+   {
+     "defaultConnection": "acme",
+     "connections": {
+       "acme":  { "baseUrl": "https://crm.example.com", "auth": "oauth" },
+       "acme-stage": { "baseUrl": "https://stage.example.com", "auth": "oauth" }
+     }
+   }
+   ```
+
+2. Sign in once (opens your browser). The refresh token is stored **encrypted** (AES-256-GCM)
+   under `~/.config/twenty-mcp/`, with the key file at mode `0600`; nothing sensitive is
+   written in plaintext:
+
+   ```bash
+   twenty-mcp login acme
+   twenty-mcp connections     # list configured connections + signed-in state
+   twenty-mcp logout acme     # remove stored tokens for a connection
+   ```
+
+3. Run the server against that connection (access tokens refresh automatically):
+
+   ```json
+   {
+     "mcpServers": {
+       "twenty-crm": {
+         "command": "npx",
+         "args": ["-y", "twenty-crm-mcp"],
+         "env": { "TWENTY_CONNECTION": "acme" }
+       }
+     }
+   }
+   ```
+
 ## Tools
 
 | Tool | Description |

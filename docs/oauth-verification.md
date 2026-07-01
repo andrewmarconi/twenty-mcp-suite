@@ -1,9 +1,19 @@
 # OAuth Live Verification (Twenty 2.17.2)
 
-Plan 2's OAuth sign-in is code-complete and fully unit-tested (85 tests green), but two
-wire-level questions can only be answered against a live self-hosted Twenty instance. Both are
-designed to **fail loudly** rather than behave insecurely, so this check is about confirming the
-happy path and catching the two known unknowns — not about safety.
+> **STATUS: PASSED** — verified 2026-07-01 against `crm.five59.com` (Twenty 2.17.2).
+> Findings: the instance issues **public (PKCE-only) clients** (no `client_secret`), and its
+> `authorization_endpoint` is `/authorize` (not `/oauth/authorize`). Both were handled by
+> reworking the client to be **discovery-driven** (RFC 8414) with optional `client_secret`.
+> Login opened the browser, completed the round-trip, stored an encrypted token, and a
+> `list_object_types` smoke returned the full live object list (incl. a custom object) — the
+> token authorizes REST as the signed-in user, scoped to their role. The `127.0.0.1` loopback
+> redirect did not hang. Refresh-token behavior post-expiry was not exercised (the refresh path
+> is unit-tested). The steps below are retained as the reproducible checklist.
+
+Plan 2's OAuth sign-in is code-complete and fully unit-tested, but two wire-level questions
+could only be answered against a live self-hosted Twenty instance. Both were designed to
+**fail loudly** rather than behave insecurely, so this check was about confirming the happy
+path and catching the two known unknowns — not about safety.
 
 **Prereq:** a self-hosted Twenty URL and a browser session logged in as a real user.
 

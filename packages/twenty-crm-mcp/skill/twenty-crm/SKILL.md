@@ -7,6 +7,9 @@ description: Use when interacting with Twenty CRM through the twentycrm-mcp serv
 
 This server is metadata-driven: object and field names come from your live Twenty schema, not hardcoded. Most tools take an `object` parameter naming the target Twenty object. Exceptions: `list_object_types` and `refresh_schema` take no arguments, and `search` takes a `query` (and optional `limit`) instead of an `object`.
 
+## Connecting
+The server authenticates in one of two ways, chosen by configuration (not by you at call time): an **API key** (`TWENTY_BASE_URL` + `TWENTY_API_KEY`), or **OAuth sign-in** where it acts as a real user and inherits that user's Twenty role. OAuth connections are named in a registry and selected with `TWENTY_CONNECTION`; signing in is a one-time `twenty-mcp login <label>` browser step done outside the assistant session. If a tool returns "Not signed in to connection … Run: twenty-mcp login …", tell the user to run that command — you cannot perform the browser sign-in yourself. Whatever the mode, the object and field access you get is bounded by the connection's Twenty permissions.
+
 ## Always do this first
 1. Call `list_object_types` to see what objects exist (built-in and custom).
 2. Before writing, call `describe_object` for the target object to use real field names and types. Do not guess field names — Twenty rejects unknown fields.
