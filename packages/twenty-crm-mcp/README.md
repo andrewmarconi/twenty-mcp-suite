@@ -147,7 +147,17 @@ Audit records metadata only — tool name, connection label, environment, outcom
 
 ## Companion Skill
 
-A Claude Skill ships alongside the server with the operational knowledge to use it well: the filter syntax for `query_records`, the describe-before-write discipline, batch/upsert guidance, the `refresh_schema` recovery reflex, and how the two auth modes select access. Install it by copying the skill directory into your project's or user's skills folder:
+A Claude Skill ships alongside the server with the operational knowledge to use it well: the filter syntax for `query_records`, the describe-before-write discipline, batch/upsert guidance, the `refresh_schema` recovery reflex, and how the two auth modes select access.
+
+The recommended way to install it is the interactive setup command, which offers to install the skill after you add your first connection (and exposes an **Install companion skill** menu action you can run any time):
+
+```bash
+twenty-mcp setup
+```
+
+It prompts for a **project** (`./.claude/skills/twenty-crm`) or **user** (`~/.claude/skills/twenty-crm`) install, and overwrites an existing copy only after you confirm.
+
+Or copy it by hand:
 
 ```bash
 cp -r node_modules/twenty-crm-mcp/skill/twenty-crm .claude/skills/twenty-crm
