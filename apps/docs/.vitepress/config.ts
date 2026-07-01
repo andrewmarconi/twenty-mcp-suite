@@ -13,7 +13,6 @@ export default defineConfig({
       { text: "Tools", link: "/tools/reference" },
       { text: "Architecture", link: "/architecture/overview" },
       { text: "Reference", link: "/reference/compatibility" },
-      { text: "GitHub", link: "https://github.com/andrewmarconi/twenty-mcp-suite" },
     ],
     sidebar: {
       "/guide/": [
