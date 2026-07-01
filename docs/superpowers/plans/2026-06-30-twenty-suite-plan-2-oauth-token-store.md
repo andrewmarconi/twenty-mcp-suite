@@ -689,7 +689,7 @@ describe("OAuthProvider", () => {
 
   it("returns a cached, unexpired access token without refreshing", async () => {
     const refreshFn = vi.fn();
-    const store = memStore({ ...base, accessToken: "good", expiresAt: 10_000 });
+    const store = memStore({ ...base, accessToken: "good", expiresAt: 50_000 });
     const p = new OAuthProvider({
       label: "acme",
       baseUrl: "https://x",
