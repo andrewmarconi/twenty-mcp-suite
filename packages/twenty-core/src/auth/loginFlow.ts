@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import type { TokenStore } from "./tokenStore.js";
 import { generateCodeVerifier, codeChallengeS256 } from "./pkce.js";
-import { registerClient, exchangeCode, buildAuthorizeUrl } from "./oauthClient.js";
+import { registerClient, exchangeCode, buildAuthorizeUrl, DEFAULT_TOKEN_TTL_SECONDS } from "./oauthClient.js";
 import { startLoopback, openBrowser } from "./loopback.js";
 
 export interface LoginDeps {
@@ -37,7 +37,15 @@ export async function loginConnection(
 ): Promise<void> {
   const port = args.port ?? DEFAULT_PORT;
   const existing = await args.store.get(args.label);
-  const server = await deps.startLoopback(port);
+  let server;
+  try {
+    server = await deps.startLoopback(port);
+  } catch (e) {
+    if ((e as { code?: string })?.code === "EADDRINUSE") {
+      throw new Error(`Local port ${port} is already in use — another sign-in may be running. Try again in a moment.`);
+    }
+    throw e;
+  }
   try {
     let clientId = existing?.clientId;
     let clientSecret = existing?.clientSecret;
@@ -79,7 +87,7 @@ export async function loginConnection(
       clientSecret,
       refreshToken: tokens.refreshToken ?? "",
       accessToken: tokens.accessToken,
-      expiresAt: tokens.expiresIn ? Date.now() + tokens.expiresIn * 1000 : undefined,
+      expiresAt: Date.now() + (tokens.expiresIn ?? DEFAULT_TOKEN_TTL_SECONDS) * 1000,
     });
     deps.log(`Signed in to "${args.label}".`);
   } finally {

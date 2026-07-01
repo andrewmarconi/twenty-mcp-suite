@@ -1,6 +1,6 @@
 import type { CredentialProvider } from "./types.js";
 import type { TokenStore } from "./tokenStore.js";
-import { refreshToken as defaultRefresh } from "./oauthClient.js";
+import { refreshToken as defaultRefresh, DEFAULT_TOKEN_TTL_SECONDS } from "./oauthClient.js";
 
 export class OAuthProvider implements CredentialProvider {
   private readonly label: string;
@@ -42,7 +42,8 @@ export class OAuthProvider implements CredentialProvider {
       clientSecret: rec.clientSecret,
       refreshToken: rec.refreshToken,
     });
-    const expiresAt = tokens.expiresIn ? this.now() + tokens.expiresIn * 1000 : undefined;
+    const ttlSeconds = tokens.expiresIn ?? DEFAULT_TOKEN_TTL_SECONDS;
+    const expiresAt = this.now() + ttlSeconds * 1000;
     await this.store.set(this.label, {
       ...rec,
       refreshToken: tokens.refreshToken ?? rec.refreshToken,

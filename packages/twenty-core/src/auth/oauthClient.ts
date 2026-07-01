@@ -6,6 +6,9 @@ export interface TokenResponse {
   expiresIn?: number;
 }
 
+/** Fallback access-token lifetime (seconds) when a token response omits expires_in. */
+export const DEFAULT_TOKEN_TTL_SECONDS = 300;
+
 function stripSlash(url: string): string {
   return url.replace(/\/+$/, "");
 }
@@ -25,7 +28,11 @@ async function postForm(
   if (!res.ok) {
     throw new TwentyApiError(`Twenty OAuth token request failed (${res.status})`, res.status, parsed, url);
   }
-  const b = parsed as { access_token?: string; refresh_token?: string; expires_in?: number };
+  const b = (parsed && typeof parsed === "object" ? parsed : {}) as {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+  };
   if (!b.access_token) {
     throw new TwentyApiError("Twenty OAuth token response had no access_token", res.status, parsed, url);
   }
@@ -53,7 +60,10 @@ export async function registerClient(
   if (!res.ok) {
     throw new TwentyApiError(`Twenty OAuth client registration failed (${res.status})`, res.status, parsed, url);
   }
-  const b = parsed as { client_id?: string; client_secret?: string };
+  const b = (parsed && typeof parsed === "object" ? parsed : {}) as {
+    client_id?: string;
+    client_secret?: string;
+  };
   if (!b.client_id || !b.client_secret) {
     throw new TwentyApiError("Twenty OAuth registration response missing client credentials", res.status, parsed, url);
   }

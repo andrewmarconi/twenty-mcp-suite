@@ -51,14 +51,15 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
 
   if (cmd === "connections") {
     const registry = deps.loadRegistry();
-    const labels = Object.keys(registry?.connections ?? {});
+    const conns = registry?.connections ?? {};
+    const labels = Object.keys(conns);
     if (labels.length === 0) {
       deps.out("No connections configured.");
       return 0;
     }
     const signedIn = new Set(await deps.store.labels());
     for (const l of labels) {
-      const cfg = registry!.connections[l];
+      const cfg = conns[l];
       const state = cfg.auth === "oauth" ? (signedIn.has(l) ? "signed in" : "not signed in") : "api key";
       deps.out(`${l}  (${cfg.auth}, ${cfg.baseUrl})  — ${state}`);
     }

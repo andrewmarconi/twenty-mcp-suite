@@ -108,6 +108,7 @@ export class FileTokenStore implements TokenStore {
       throw new Error(
         `twenty-mcp: token store record is corrupt or was tampered with, or the key file changed. ` +
           `Run 'twenty-mcp logout <label>' to remove it and re-authenticate.`,
+        { cause: err },
       );
     }
   }
@@ -117,10 +118,11 @@ export class FileTokenStore implements TokenStore {
     const raw = readFileSync(this.dataPath, "utf8");
     try {
       return JSON.parse(raw) as Record<string, Blob>;
-    } catch {
+    } catch (err) {
       throw new Error(
         `twenty-mcp: token store at ${this.dataPath} is corrupt (invalid JSON). ` +
           `Delete the file and re-authenticate, or run 'twenty-mcp logout <label>'.`,
+        { cause: err },
       );
     }
   }

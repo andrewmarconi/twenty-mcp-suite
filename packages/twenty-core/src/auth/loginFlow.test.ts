@@ -88,4 +88,13 @@ describe("loginConnection", () => {
     ).rejects.toThrow("boom");
     expect(close).toHaveBeenCalled();
   });
+
+  it("surfaces a friendly message when the loopback port is already in use", async () => {
+    const d = deps({
+      startLoopback: vi.fn().mockRejectedValue(Object.assign(new Error("x"), { code: "EADDRINUSE" })),
+    });
+    await expect(
+      loginConnection({ label: "acme", baseUrl: "https://x", store: memStore(), port: 52333 }, d as never),
+    ).rejects.toThrow(/already in use/);
+  });
 });

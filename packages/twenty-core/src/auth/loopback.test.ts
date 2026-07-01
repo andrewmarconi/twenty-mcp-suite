@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseCallback } from "./loopback.js";
+import { parseCallback, startLoopback } from "./loopback.js";
 
 describe("parseCallback", () => {
   it("extracts code and state from the callback path", () => {
@@ -17,5 +17,14 @@ describe("parseCallback", () => {
 
   it("returns empty fields for an unrelated path", () => {
     expect(parseCallback("/favicon.ico")).toEqual({});
+  });
+});
+
+describe("startLoopback", () => {
+  it("close() rejects a pending waitForCode", async () => {
+    const server = await startLoopback(0); // OS-assigned port
+    const pending = server.waitForCode("state");
+    server.close();
+    await expect(pending).rejects.toThrow(/cancel/i);
   });
 });

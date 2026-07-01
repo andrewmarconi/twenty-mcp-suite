@@ -80,4 +80,24 @@ describe("OAuthProvider", () => {
     });
     expect(await p.getBearer()).toBe("fresh");
   });
+
+  it("defaults a short TTL when a refresh response omits expiresIn, and caches within it", async () => {
+    const refreshFn = vi.fn().mockResolvedValue({ accessToken: "fresh" });
+    const store = memStore({ ...base, accessToken: "stale", expiresAt: 1_000 });
+    const p = new OAuthProvider({
+      label: "acme",
+      baseUrl: "https://x",
+      store,
+      now: () => 5_000,
+      refreshFn: refreshFn as never,
+    });
+    expect(await p.getBearer()).toBe("fresh");
+    const rec = (await store.get("acme"))!;
+    expect(rec.expiresAt).toBe(5_000 + 300 * 1000);
+    expect(refreshFn).toHaveBeenCalledTimes(1);
+
+    // A subsequent call before the default TTL expires should use the cache, not refresh again.
+    expect(await p.getBearer()).toBe("fresh");
+    expect(refreshFn).toHaveBeenCalledTimes(1);
+  });
 });

@@ -27,6 +27,7 @@ export interface LoopbackServer {
 export function startLoopback(port: number): Promise<LoopbackServer> {
   return new Promise((resolve, reject) => {
     let onResult: ((r: { code?: string; state?: string; error?: string }) => void) | null = null;
+    let pendingReject: ((e: Error) => void) | null = null;
 
     const server: Server = createServer((req, res) => {
       const result = parseCallback(req.url ?? "");
@@ -41,15 +42,29 @@ export function startLoopback(port: number): Promise<LoopbackServer> {
         redirectUri: `http://127.0.0.1:${port}/callback`,
         waitForCode(expectedState: string): Promise<string> {
           return new Promise((res, rej) => {
+            pendingReject = rej;
             onResult = (r) => {
-              if (r.error) return rej(new Error(`OAuth error: ${r.error}`));
+              if (r.error) {
+                pendingReject = null;
+                return rej(new Error(`OAuth error: ${r.error}`));
+              }
               if (!r.code) return; // ignore stray requests (favicon, etc.)
-              if (r.state !== expectedState) return rej(new Error("OAuth state mismatch"));
+              if (r.state !== expectedState) {
+                pendingReject = null;
+                return rej(new Error("OAuth state mismatch"));
+              }
+              pendingReject = null;
               res(r.code);
             };
           });
         },
-        close: () => server.close(),
+        close: () => {
+          server.close();
+          if (pendingReject) {
+            pendingReject(new Error("Sign-in was cancelled before completion."));
+            pendingReject = null;
+          }
+        },
       });
     });
   });
