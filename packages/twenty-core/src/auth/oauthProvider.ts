@@ -4,7 +4,6 @@ import { refreshToken as defaultRefresh, DEFAULT_TOKEN_TTL_SECONDS } from "./oau
 
 export class OAuthProvider implements CredentialProvider {
   private readonly label: string;
-  private readonly baseUrl: string;
   private readonly store: TokenStore;
   private readonly now: () => number;
   private readonly refreshFn: typeof defaultRefresh;
@@ -12,14 +11,12 @@ export class OAuthProvider implements CredentialProvider {
 
   constructor(args: {
     label: string;
-    baseUrl: string;
     store: TokenStore;
     now?: () => number;
     refreshFn?: typeof defaultRefresh;
     skewMs?: number;
   }) {
     this.label = args.label;
-    this.baseUrl = args.baseUrl;
     this.store = args.store;
     this.now = args.now ?? (() => Date.now());
     this.refreshFn = args.refreshFn ?? defaultRefresh;
@@ -37,7 +34,7 @@ export class OAuthProvider implements CredentialProvider {
       return rec.accessToken;
     }
     const tokens = await this.refreshFn({
-      baseUrl: this.baseUrl,
+      tokenEndpoint: rec.tokenEndpoint,
       clientId: rec.clientId,
       clientSecret: rec.clientSecret,
       refreshToken: rec.refreshToken,

@@ -30,8 +30,9 @@ export {
   buildAuthorizeUrl,
   exchangeCode,
   refreshToken,
+  discoverOAuth,
 } from "./auth/oauthClient.js";
-export type { TokenResponse } from "./auth/oauthClient.js";
+export type { TokenResponse, OAuthServerMetadata } from "./auth/oauthClient.js";
 export { parseCallback, startLoopback, openBrowser } from "./auth/loopback.js";
 export type { LoopbackServer } from "./auth/loopback.js";
 export { loginConnection } from "./auth/loginFlow.js";

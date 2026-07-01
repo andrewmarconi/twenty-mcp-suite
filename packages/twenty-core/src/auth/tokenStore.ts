@@ -9,7 +9,8 @@ import { join } from "node:path";
 
 export interface TokenRecord {
   clientId: string;
-  clientSecret: string;
+  clientSecret?: string;
+  tokenEndpoint: string;
   refreshToken: string;
   accessToken?: string;
   expiresAt?: number;

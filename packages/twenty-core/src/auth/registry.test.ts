@@ -140,6 +140,7 @@ describe("oauth connections", () => {
         store: memStore({
           clientId: "cid",
           clientSecret: "csec",
+          tokenEndpoint: "https://oauth.acme.com/oauth/token",
           refreshToken: "rt",
           accessToken: "live",
           expiresAt: Number.MAX_SAFE_INTEGER,

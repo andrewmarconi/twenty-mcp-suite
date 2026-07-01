@@ -19,12 +19,13 @@ function memStore(initial?: TokenRecord): TokenStore {
 const base: TokenRecord = {
   clientId: "cid",
   clientSecret: "csec",
+  tokenEndpoint: "https://crm.example.com/oauth/token",
   refreshToken: "rt",
 };
 
 describe("OAuthProvider", () => {
   it("throws an actionable login hint when no record is stored", async () => {
-    const p = new OAuthProvider({ label: "acme", baseUrl: "https://x", store: memStore() });
+    const p = new OAuthProvider({ label: "acme", store: memStore() });
     await expect(p.getBearer()).rejects.toThrow(/twenty-mcp login acme/);
   });
 
@@ -33,7 +34,6 @@ describe("OAuthProvider", () => {
     const store = memStore({ ...base, accessToken: "good", expiresAt: 50_000 });
     const p = new OAuthProvider({
       label: "acme",
-      baseUrl: "https://x",
       store,
       now: () => 5_000,
       refreshFn: refreshFn as never,
@@ -50,14 +50,13 @@ describe("OAuthProvider", () => {
     const setSpy = vi.spyOn(store, "set");
     const p = new OAuthProvider({
       label: "acme",
-      baseUrl: "https://x",
       store,
       now: () => 5_000,
       refreshFn: refreshFn as never,
     });
     expect(await p.getBearer()).toBe("fresh");
     expect(refreshFn).toHaveBeenCalledWith({
-      baseUrl: "https://x",
+      tokenEndpoint: "https://crm.example.com/oauth/token",
       clientId: "cid",
       clientSecret: "csec",
       refreshToken: "rt",
@@ -67,13 +66,30 @@ describe("OAuthProvider", () => {
     expect((await store.get("acme"))!.refreshToken).toBe("rt2");
   });
 
+  it("refreshes a public client (no clientSecret) using the record's tokenEndpoint", async () => {
+    const refreshFn = vi.fn().mockResolvedValue({ accessToken: "fresh", expiresIn: 3600 });
+    const store = memStore({ ...base, clientSecret: undefined, accessToken: "stale", expiresAt: 1_000 });
+    const p = new OAuthProvider({
+      label: "acme",
+      store,
+      now: () => 5_000,
+      refreshFn: refreshFn as never,
+    });
+    expect(await p.getBearer()).toBe("fresh");
+    expect(refreshFn).toHaveBeenCalledWith({
+      tokenEndpoint: "https://crm.example.com/oauth/token",
+      clientId: "cid",
+      clientSecret: undefined,
+      refreshToken: "rt",
+    });
+  });
+
   it("refreshes when there is a refresh token but no access token yet", async () => {
     const refreshFn = vi
       .fn()
       .mockResolvedValue({ accessToken: "fresh", expiresIn: 3600 });
     const p = new OAuthProvider({
       label: "acme",
-      baseUrl: "https://x",
       store: memStore({ ...base }),
       now: () => 0,
       refreshFn: refreshFn as never,
@@ -86,7 +102,6 @@ describe("OAuthProvider", () => {
     const store = memStore({ ...base, accessToken: "stale", expiresAt: 1_000 });
     const p = new OAuthProvider({
       label: "acme",
-      baseUrl: "https://x",
       store,
       now: () => 5_000,
       refreshFn: refreshFn as never,

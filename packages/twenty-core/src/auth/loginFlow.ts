@@ -1,10 +1,17 @@
 import { randomBytes } from "node:crypto";
 import type { TokenStore } from "./tokenStore.js";
 import { generateCodeVerifier, codeChallengeS256 } from "./pkce.js";
-import { registerClient, exchangeCode, buildAuthorizeUrl, DEFAULT_TOKEN_TTL_SECONDS } from "./oauthClient.js";
+import {
+  registerClient,
+  exchangeCode,
+  buildAuthorizeUrl,
+  discoverOAuth,
+  DEFAULT_TOKEN_TTL_SECONDS,
+} from "./oauthClient.js";
 import { startLoopback, openBrowser } from "./loopback.js";
 
 export interface LoginDeps {
+  discover: typeof discoverOAuth;
   register: typeof registerClient;
   exchange: typeof exchangeCode;
   startLoopback: typeof startLoopback;
@@ -19,6 +26,7 @@ const DEFAULT_PORT = 52333;
 
 function defaultDeps(): LoginDeps {
   return {
+    discover: discoverOAuth,
     register: registerClient,
     exchange: exchangeCode,
     startLoopback,
@@ -47,10 +55,13 @@ export async function loginConnection(
     throw e;
   }
   try {
+    const meta = await deps.discover(args.baseUrl);
+    const authMethod = meta.tokenEndpointAuthMethods.includes("none") ? "none" : "client_secret_post";
+
     let clientId = existing?.clientId;
     let clientSecret = existing?.clientSecret;
-    if (!clientId || !clientSecret) {
-      const creds = await deps.register(args.baseUrl, server.redirectUri, undefined);
+    if (!clientId) {
+      const creds = await deps.register(meta.registrationEndpoint, server.redirectUri, authMethod);
       clientId = creds.clientId;
       clientSecret = creds.clientSecret;
     }
@@ -59,7 +70,7 @@ export async function loginConnection(
     const challenge = deps.challenge(verifier);
     const state = deps.makeState();
     const authorizeUrl = buildAuthorizeUrl({
-      baseUrl: args.baseUrl,
+      authorizationEndpoint: meta.authorizationEndpoint,
       clientId,
       redirectUri: server.redirectUri,
       state,
@@ -70,21 +81,19 @@ export async function loginConnection(
     deps.openBrowser(authorizeUrl);
 
     const code = await server.waitForCode(state);
-    const tokens = await deps.exchange(
-      {
-        baseUrl: args.baseUrl,
-        clientId,
-        clientSecret,
-        code,
-        redirectUri: server.redirectUri,
-        codeVerifier: verifier,
-      },
-      undefined,
-    );
+    const tokens = await deps.exchange({
+      tokenEndpoint: meta.tokenEndpoint,
+      clientId,
+      clientSecret,
+      code,
+      redirectUri: server.redirectUri,
+      codeVerifier: verifier,
+    });
 
     await args.store.set(args.label, {
       clientId,
       clientSecret,
+      tokenEndpoint: meta.tokenEndpoint,
       refreshToken: tokens.refreshToken ?? "",
       accessToken: tokens.accessToken,
       expiresAt: Date.now() + (tokens.expiresIn ?? DEFAULT_TOKEN_TTL_SECONDS) * 1000,

@@ -18,6 +18,7 @@ beforeEach(() => {
 const rec: TokenRecord = {
   clientId: "cid",
   clientSecret: "csecret",
+  tokenEndpoint: "https://crm.example.com/oauth/token",
   refreshToken: "rtok",
   accessToken: "atok",
   expiresAt: 123,

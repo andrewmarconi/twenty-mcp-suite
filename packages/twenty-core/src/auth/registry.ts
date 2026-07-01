@@ -51,7 +51,6 @@ export function buildConnectionFromConfig(
     const tokenStore = store ?? new FileTokenStore(defaultConfigDir(env));
     const provider = new OAuthProvider({
       label,
-      baseUrl: stripTrailingSlash(cfg.baseUrl),
       store: tokenStore,
     });
     return {
