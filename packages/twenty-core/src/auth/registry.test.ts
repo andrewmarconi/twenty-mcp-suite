@@ -69,6 +69,8 @@ describe("buildConnectionFromConfig", () => {
 });
 
 describe("resolveActiveConnection", () => {
+  const NO_REGISTRY = { configPath: join(tmpdir(), "twenty-mcp-no-such-registry-file.json") };
+
   it("picks TWENTY_CONNECTION from the registry", async () => {
     const conn = resolveActiveConnection(
       { TWENTY_CONNECTION: "acme-prod", TWENTY_API_KEY_ACME_PROD: "acme-key" },
@@ -90,13 +92,16 @@ describe("resolveActiveConnection", () => {
   });
 
   it("uses the legacy env when no registry is provided", async () => {
-    const conn = resolveActiveConnection({ TWENTY_BASE_URL: "https://x", TWENTY_API_KEY: "k" });
+    const conn = resolveActiveConnection(
+      { TWENTY_BASE_URL: "https://x", TWENTY_API_KEY: "k" },
+      NO_REGISTRY,
+    );
     expect(conn.label).toBe("default");
     expect(await conn.getBearer()).toBe("k");
   });
 
   it("throws an actionable error when nothing is configured", () => {
-    expect(() => resolveActiveConnection({})).toThrow(/TWENTY_BASE_URL/);
+    expect(() => resolveActiveConnection({}, NO_REGISTRY)).toThrow(/TWENTY_BASE_URL/);
   });
 });
 
