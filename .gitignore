@@ -5,3 +5,5 @@ dist/
 .env.*
 !.env.example
 .DS_Store
+apps/docs/.vitepress/dist/
+apps/docs/.vitepress/cache/
