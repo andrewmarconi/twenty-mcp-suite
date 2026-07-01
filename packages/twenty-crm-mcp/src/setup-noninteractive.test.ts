@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { parseSetupArgs } from "./setup.js";
+import { describe, it, expect, vi } from "vitest";
+import { parseSetupArgs, runSetupNonInteractive } from "./setup.js";
+import type { RegistryFile } from "twenty-core";
 
 describe("parseSetupArgs", () => {
   it("no args → interactive", () => {
@@ -106,10 +107,6 @@ describe("parseSetupArgs", () => {
       .toEqual({ error: expect.stringMatching(/action/i) });
   });
 });
-
-import { vi } from "vitest";
-import { runSetupNonInteractive } from "./setup.js";
-import type { RegistryFile } from "twenty-core";
 
 function ndeps(over: Record<string, unknown> = {}) {
   const saved: RegistryFile[] = [];
