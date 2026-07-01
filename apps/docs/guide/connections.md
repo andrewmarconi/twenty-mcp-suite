@@ -20,6 +20,23 @@ It opens a menu that lets you:
 
 Changes are saved after each step, so quitting partway through keeps what you already added. **No secrets are written to the registry** — API keys stay in your environment, and OAuth tokens are stored encrypted separately (see [Authentication](/guide/authentication)).
 
+## Non-interactive (scripting / CI)
+
+Every action the interactive menu offers is also available as a single flag-driven command, useful for scripting or CI. Exactly one action flag is allowed per invocation:
+
+```bash
+twenty-mcp setup --add <label> --url <url> --auth <oauth|apikey>
+twenty-mcp setup --edit <label> [--url <url>] [--auth <oauth|apikey>] [--label <new-label>]
+twenty-mcp setup --remove <label> [--purge-credentials]
+twenty-mcp setup --set-default <label>
+twenty-mcp setup --install-skill --scope <project|user>
+```
+
+- `--add` with `--auth oauth` records the site only and prints a `twenty-mcp login <label>` hint — the browser sign-in flow does not run in non-interactive mode, so it works unattended in CI. Run `twenty-mcp login <label>` separately once you need a token.
+- `--add` with `--auth apikey` prints the `TWENTY_API_KEY_<LABEL>` env var to set (falls back to `TWENTY_API_KEY`). No secret is ever written to the registry.
+- `--install-skill` overwrites an existing skill without prompting.
+- `--remove` with `--purge-credentials` also deletes any stored OAuth token for that label, not just the registry entry.
+
 ## The registry file
 
 `setup` reads and writes the registry at:
