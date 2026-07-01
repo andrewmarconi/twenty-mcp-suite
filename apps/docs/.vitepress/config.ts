@@ -10,6 +10,8 @@ export default defineConfig({
     nav: [
       { text: "Guide", link: "/guide/introduction" },
       { text: "Tools", link: "/tools/reference" },
+      { text: "Architecture", link: "/architecture/overview" },
+      { text: "Reference", link: "/reference/compatibility" },
       { text: "GitHub", link: "https://github.com/andrewmarconi/twenty-mcp-suite" },
     ],
     sidebar: {
@@ -32,6 +34,26 @@ export default defineConfig({
             { text: "Object scoping", link: "/tools/scoping" },
             { text: "Composite reads", link: "/tools/composites" },
             { text: "Auditing", link: "/tools/auditing" },
+          ],
+        },
+      ],
+      "/architecture/": [
+        {
+          text: "Architecture",
+          items: [
+            { text: "Suite overview", link: "/architecture/overview" },
+            { text: "Resilience", link: "/architecture/resilience" },
+            { text: "Auth model", link: "/architecture/auth-model" },
+            { text: "Roadmap", link: "/architecture/roadmap" },
+          ],
+        },
+      ],
+      "/reference/": [
+        {
+          text: "Reference",
+          items: [
+            { text: "Compatibility & caveats", link: "/reference/compatibility" },
+            { text: "Companion Skill", link: "/reference/skill" },
           ],
         },
       ],
