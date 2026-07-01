@@ -24,7 +24,7 @@ Re-run `setup` any time to add, edit, or remove connections, change the default,
 
 ## Point your MCP client at the server
 
-Add the server to your MCP config (`.mcp.json` or `claude_desktop_config.json`).
+Add the server to your MCP config (`.mcp.json` or `claude_desktop_config.json`). Using **another agent** — Codex, Cursor, OpenCode, OpenClaw, Pi, …? See [MCP clients](/guide/mcp-clients) for each one's config location and format.
 
 Using a named connection from `setup` (recommended — required for OAuth):
 

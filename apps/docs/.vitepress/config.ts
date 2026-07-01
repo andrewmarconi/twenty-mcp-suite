@@ -21,8 +21,10 @@ export default defineConfig({
           items: [
             { text: "Introduction", link: "/guide/introduction" },
             { text: "Installation & Quickstart", link: "/guide/installation" },
+            { text: "MCP clients", link: "/guide/mcp-clients" },
             { text: "Authentication", link: "/guide/authentication" },
             { text: "Connections & multi-instance", link: "/guide/connections" },
+            { text: "Local development", link: "/guide/local-development" },
           ],
         },
       ],
