@@ -7,6 +7,8 @@ import { schemaTools, type ToolDef } from "./tools/schemaTools.js";
 import { readTools } from "./tools/readTools.js";
 import { writeTools } from "./tools/writeTools.js";
 import { upsertTool } from "./tools/upsertTool.js";
+import type { CapabilityProfile } from "./profile/types.js";
+import { buildProfileTools } from "./profile/buildProfileTools.js";
 
 export interface ServerMeta {
   name: string;
@@ -32,17 +34,13 @@ export function buildTools(
   return tools;
 }
 
-export function createServer(
-  connection: Connection,
-  meta: ServerMeta,
-  fetchImpl: typeof fetch = fetch,
-): { server: McpServer; cache: SchemaCache } {
-  const rest = new RestClient(connection, fetchImpl);
-  const gql = new GraphQLClient(connection, fetchImpl);
-  const cache = new SchemaCache(rest);
-  const server = new McpServer({ name: meta.name, version: meta.version });
-
-  for (const tool of buildTools(rest, gql, cache)) {
+function wireServer(
+  server: McpServer,
+  tools: ToolDef[],
+  cache: SchemaCache,
+  objectScope?: string[],
+): void {
+  for (const tool of tools) {
     server.registerTool(
       tool.name,
       { description: tool.description, inputSchema: tool.inputSchema },
@@ -53,23 +51,55 @@ export function createServer(
     );
   }
 
+  const scopeSet = objectScope ? new Set(objectScope.map((s) => s.toLowerCase())) : null;
   server.registerResource(
     "schema",
     "twenty://schema",
     { description: "The live Twenty schema (objects and fields) as JSON." },
     async () => {
       await cache.ensureLoaded();
+      const list = scopeSet
+        ? cache
+            .list()
+            .filter(
+              (o) =>
+                scopeSet.has(o.namePlural.toLowerCase()) ||
+                scopeSet.has(o.nameSingular.toLowerCase()),
+            )
+        : cache.list();
       return {
         contents: [
-          {
-            uri: "twenty://schema",
-            mimeType: "application/json",
-            text: JSON.stringify(cache.list()),
-          },
+          { uri: "twenty://schema", mimeType: "application/json", text: JSON.stringify(list) },
         ],
       };
     },
   );
+}
 
+export function createServer(
+  connection: Connection,
+  meta: ServerMeta,
+  fetchImpl: typeof fetch = fetch,
+): { server: McpServer; cache: SchemaCache } {
+  const rest = new RestClient(connection, fetchImpl);
+  const gql = new GraphQLClient(connection, fetchImpl);
+  const cache = new SchemaCache(rest);
+  const server = new McpServer({ name: meta.name, version: meta.version });
+  wireServer(server, buildTools(rest, gql, cache), cache);
+  return { server, cache };
+}
+
+export function createSegmentServer(
+  connection: Connection,
+  profile: CapabilityProfile,
+  meta: ServerMeta,
+  fetchImpl: typeof fetch = fetch,
+): { server: McpServer; cache: SchemaCache } {
+  const rest = new RestClient(connection, fetchImpl);
+  const gql = new GraphQLClient(connection, fetchImpl);
+  const cache = new SchemaCache(rest);
+  const server = new McpServer({ name: meta.name, version: meta.version });
+  const primitives = buildTools(rest, gql, cache);
+  wireServer(server, buildProfileTools(profile, primitives, cache), cache, profile.objectScope);
   return { server, cache };
 }
