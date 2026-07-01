@@ -38,6 +38,120 @@ export function isHttpUrl(v: string): boolean {
   }
 }
 
+export type SetupCommand =
+  | { kind: "interactive" }
+  | { kind: "add"; label: string; url: string; auth: "oauth" | "apikey" }
+  | { kind: "edit"; label: string; url?: string; auth?: "oauth" | "apikey"; newLabel?: string }
+  | { kind: "remove"; label: string; purgeCredentials: boolean }
+  | { kind: "set-default"; label: string }
+  | { kind: "install-skill"; scope: "project" | "user" };
+
+const ACTION_FLAGS = ["add", "edit", "remove", "set-default", "install-skill"] as const;
+// action flags that carry a label value; "install-skill" is a boolean action
+const VALUE_FLAGS = new Set(["add", "edit", "remove", "set-default", "url", "auth", "label", "scope"]);
+const BOOL_FLAGS = new Set(["install-skill", "purge-credentials"]);
+// modifiers each action may accept (label-carrying action flags are not modifiers)
+const ALLOWED_MODIFIERS: Record<(typeof ACTION_FLAGS)[number], Set<string>> = {
+  add: new Set(["url", "auth"]),
+  edit: new Set(["url", "auth", "label"]),
+  remove: new Set(["purge-credentials"]),
+  "set-default": new Set(),
+  "install-skill": new Set(["scope"]),
+};
+
+export function parseSetupArgs(args: string[]): SetupCommand | { error: string } {
+  if (args.length === 0) return { kind: "interactive" };
+
+  const values = new Map<string, string>();
+  const bools = new Set<string>();
+  for (let i = 0; i < args.length; i++) {
+    const tok = args[i];
+    if (!tok.startsWith("--")) return { error: `Unexpected argument "${tok}".` };
+    const name = tok.slice(2);
+    if (BOOL_FLAGS.has(name)) {
+      bools.add(name);
+      continue;
+    }
+    if (VALUE_FLAGS.has(name)) {
+      const val = args[i + 1];
+      if (val === undefined || val.startsWith("--")) return { error: `--${name} requires a value.` };
+      values.set(name, val);
+      i++;
+      continue;
+    }
+    return { error: `Unknown flag "--${name}".` };
+  }
+
+  const actions = ACTION_FLAGS.filter((a) => values.has(a) || bools.has(a));
+  if (actions.length === 0) {
+    return {
+      error:
+        "No action specified. Use one of --add, --edit, --remove, --set-default, --install-skill.",
+    };
+  }
+  if (actions.length > 1) {
+    return { error: `Only one action allowed per invocation; got ${actions.map((a) => "--" + a).join(", ")}.` };
+  }
+  const action = actions[0];
+
+  // reject modifiers that don't belong to the chosen action
+  const presentMods = [
+    ...["url", "auth", "label", "scope"].filter((m) => values.has(m)),
+    ...["purge-credentials"].filter((m) => bools.has(m)),
+  ];
+  for (const m of presentMods) {
+    if (!ALLOWED_MODIFIERS[action].has(m)) return { error: `--${m} is not valid with --${action}.` };
+  }
+
+  if (action === "add") {
+    const label = values.get("add")!;
+    if (!LABEL_RE.test(label)) return { error: `Invalid label "${label}". Use lowercase letters, digits, and hyphens.` };
+    const url = values.get("url");
+    const auth = values.get("auth");
+    if (!url || !auth) return { error: "--add requires --url and --auth." };
+    if (!isHttpUrl(url)) return { error: `Invalid --url "${url}". Enter a valid http(s) URL.` };
+    if (auth !== "oauth" && auth !== "apikey") return { error: `Invalid --auth "${auth}". Use "oauth" or "apikey".` };
+    return { kind: "add", label, url, auth };
+  }
+
+  if (action === "edit") {
+    const label = values.get("edit")!;
+    if (!LABEL_RE.test(label)) return { error: `Invalid label "${label}". Use lowercase letters, digits, and hyphens.` };
+    const url = values.get("url");
+    const auth = values.get("auth");
+    const newLabel = values.get("label");
+    if (url === undefined && auth === undefined && newLabel === undefined) {
+      return { error: "--edit requires at least one of --url, --auth, or --label." };
+    }
+    if (url !== undefined && !isHttpUrl(url)) return { error: `Invalid --url "${url}". Enter a valid http(s) URL.` };
+    if (auth !== undefined && auth !== "oauth" && auth !== "apikey") return { error: `Invalid --auth "${auth}". Use "oauth" or "apikey".` };
+    if (newLabel !== undefined && !LABEL_RE.test(newLabel)) return { error: `Invalid --label "${newLabel}". Use lowercase letters, digits, and hyphens.` };
+    const cmd: Extract<SetupCommand, { kind: "edit" }> = { kind: "edit", label };
+    if (url !== undefined) cmd.url = url;
+    if (auth !== undefined) cmd.auth = auth;
+    if (newLabel !== undefined) cmd.newLabel = newLabel;
+    return cmd;
+  }
+
+  if (action === "remove") {
+    const label = values.get("remove")!;
+    if (!LABEL_RE.test(label)) return { error: `Invalid label "${label}". Use lowercase letters, digits, and hyphens.` };
+    return { kind: "remove", label, purgeCredentials: bools.has("purge-credentials") };
+  }
+
+  if (action === "set-default") {
+    const label = values.get("set-default")!;
+    if (!LABEL_RE.test(label)) return { error: `Invalid label "${label}". Use lowercase letters, digits, and hyphens.` };
+    return { kind: "set-default", label };
+  }
+
+  // action === "install-skill"
+  const scope = values.get("scope");
+  if (!scope) return { error: "--install-skill requires --scope <project|user>." };
+  if (scope !== "project" && scope !== "user") return { error: `Invalid --scope "${scope}". Use "project" or "user".` };
+  return { kind: "install-skill", scope };
+}
+
 function printConnections(deps: SetupDeps, reg: RegistryFile): void {
   const labels = Object.keys(reg.connections);
   if (labels.length === 0) {
