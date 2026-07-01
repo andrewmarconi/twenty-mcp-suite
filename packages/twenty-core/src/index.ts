@@ -22,6 +22,7 @@ export {
   legacyConnectionFromEnv,
   buildConnectionFromConfig,
   resolveActiveConnection,
+  loadRegistryFile,
 } from "./auth/registry.js";
 export type { ConnectionConfig, RegistryFile } from "./auth/registry.js";
 export {

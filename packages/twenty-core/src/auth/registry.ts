@@ -1,4 +1,8 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { ApiKeyProvider } from "./apiKeyProvider.js";
+import { OAuthProvider } from "./oauthProvider.js";
+import { FileTokenStore, defaultConfigDir, type TokenStore } from "./tokenStore.js";
 import type { Connection } from "./types.js";
 
 export interface ConnectionConfig {
@@ -32,16 +36,30 @@ export function legacyConnectionFromEnv(env: NodeJS.ProcessEnv): Connection | nu
   };
 }
 
+export function loadRegistryFile(path: string): RegistryFile | null {
+  if (!existsSync(path)) return null;
+  return JSON.parse(readFileSync(path, "utf8")) as RegistryFile;
+}
+
 export function buildConnectionFromConfig(
   label: string,
   cfg: ConnectionConfig,
   env: NodeJS.ProcessEnv,
+  store?: TokenStore,
 ): Connection {
   if (cfg.auth === "oauth") {
-    throw new Error(
-      `Connection "${label}" uses OAuth, which is not supported until Plan 2. ` +
-        `Use an apikey connection for now.`,
-    );
+    const tokenStore = store ?? new FileTokenStore(defaultConfigDir(env));
+    const provider = new OAuthProvider({
+      label,
+      baseUrl: stripTrailingSlash(cfg.baseUrl),
+      store: tokenStore,
+    });
+    return {
+      label,
+      baseUrl: stripTrailingSlash(cfg.baseUrl),
+      env: cfg.env,
+      getBearer: () => provider.getBearer(),
+    };
   }
   const perLabel = envKeyForLabel(label);
   const apiKey = env[perLabel]?.trim() || env.TWENTY_API_KEY?.trim();
@@ -50,20 +68,27 @@ export function buildConnectionFromConfig(
       `No API key for connection "${label}". Set ${perLabel} (or TWENTY_API_KEY) in the environment.`,
     );
   }
-  const provider = new ApiKeyProvider(apiKey);
+  const apiProvider = new ApiKeyProvider(apiKey);
   return {
     label,
     baseUrl: stripTrailingSlash(cfg.baseUrl),
     env: cfg.env,
-    getBearer: () => provider.getBearer(),
+    getBearer: () => apiProvider.getBearer(),
   };
 }
 
 export function resolveActiveConnection(
   env: NodeJS.ProcessEnv,
-  opts?: { registry?: RegistryFile },
+  opts?: { registry?: RegistryFile; store?: TokenStore; configPath?: string },
 ): Connection {
-  const registry = opts?.registry;
+  const registry =
+    opts?.registry ??
+    loadRegistryFile(
+      opts?.configPath ??
+        env.TWENTY_MCP_CONFIG?.trim() ??
+        join(defaultConfigDir(env), "connections.json"),
+    );
+
   if (registry) {
     const label = env.TWENTY_CONNECTION?.trim() || registry.defaultConnection;
     if (!label) {
@@ -77,7 +102,7 @@ export function resolveActiveConnection(
         `Unknown connection "${label}". Known connections: ${Object.keys(registry.connections).join(", ") || "(none)"}.`,
       );
     }
-    return buildConnectionFromConfig(label, cfg, env);
+    return buildConnectionFromConfig(label, cfg, env, opts?.store);
   }
 
   const legacy = legacyConnectionFromEnv(env);
