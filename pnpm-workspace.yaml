@@ -1,6 +1,11 @@
 packages:
   - "packages/*"
   - "apps/*"
+# Force patched dev-toolchain transitives (dev-server CVEs pulled via VitePress/Vite).
+# vite <6.4.3 and esbuild <0.25.0 are the Dependabot-flagged ranges.
+overrides:
+  vite: ">=7.3.5 <8"
+  esbuild: ">=0.25.0"
 allowBuilds:
   esbuild: true
 minimumReleaseAge: 1440
