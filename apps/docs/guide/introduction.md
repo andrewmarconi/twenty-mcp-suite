@@ -15,6 +15,16 @@ Tools are the stable *mechanism*; a companion Claude Skill carries the volatile 
 - **Composite reads** like `get_contact_brief` that return a record with its related data in a single call.
 - **Structured audit logging** of every tool invocation.
 
+## Project goals
+
+Five commitments shape what this suite is and where it goes. They double as the criteria we hold new work against.
+
+- **Make it safe** — proper authentication and permissions, with production-ready deployment guidance. The assistant acts as you, scoped to your Twenty role, and every tool call is audited.
+- **Make it usable** — a curated toolset with clear, business-shaped names and ergonomic categories aligned with real CRM workflows, rather than a raw dump of every API endpoint.
+- **Make it complete** — coverage that reflects how teams actually customize Twenty: workflows, custom objects, and direct GraphQL access when the generic tools aren't enough.
+- **Make it documented** — clear examples for Claude and other MCP clients, with suggested patterns and prompts you can adapt.
+- **Make it robust** — performance-aware, environment-aware behavior that respects the constraints of a self-hosted instance instead of hammering it.
+
 ## Next
 
 - [Installation & Quickstart](/guide/installation)
