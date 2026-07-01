@@ -208,3 +208,35 @@ describe("runSetup — install skill", () => {
     expect(d.skill.install).not.toHaveBeenCalled();
   });
 });
+
+describe("runSetup — proactive skill offer after first add", () => {
+  it("offers and installs the skill after adding a connection when none is installed", async () => {
+    // menu:add, label, baseUrl, auth:apikey, offer-confirm:true, scope:project, menu:done
+    const { d } = deps(
+      ["add", "acme", "https://crm.acme.com", "apikey", true, "project", "done"],
+      { skill: skillDep({ exists: () => false }) },
+    );
+    const code = await runSetup(d as never);
+    expect(code).toBe(0);
+    expect(d.skill.install).toHaveBeenCalledWith("/pkg/skill/twenty-crm", "/proj/.claude/skills/twenty-crm");
+  });
+
+  it("does not offer when a skill is already installed", async () => {
+    // default skillDep().exists === true -> no offer prompt is consumed
+    const { saved, d } = deps(["add", "acme", "https://crm.acme.com", "apikey", "done"]);
+    await runSetup(d as never);
+    expect(saved.at(-1)!.connections.acme).toBeDefined();
+    expect(d.skill.install).not.toHaveBeenCalled();
+  });
+
+  it("records the connection even when the offer is declined", async () => {
+    // menu:add, label, baseUrl, auth:apikey, offer-confirm:false, menu:done
+    const { saved, d } = deps(
+      ["add", "acme", "https://crm.acme.com", "apikey", false, "done"],
+      { skill: skillDep({ exists: () => false }) },
+    );
+    await runSetup(d as never);
+    expect(saved.at(-1)!.connections.acme).toBeDefined();
+    expect(d.skill.install).not.toHaveBeenCalled();
+  });
+});

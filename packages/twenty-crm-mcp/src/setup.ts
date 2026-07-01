@@ -104,6 +104,13 @@ async function addSite(deps: SetupDeps, reg: RegistryFile): Promise<RegistryFile
       "API key",
     );
   }
+
+  if (!deps.skill.exists(deps.skill.projectDest) && !deps.skill.exists(deps.skill.userDest)) {
+    const want = await p.confirm({ message: "Install the companion skill now? (recommended)" });
+    if (!p.isCancel(want) && want === true) {
+      await installSkillAction(deps);
+    }
+  }
   return next;
 }
 
