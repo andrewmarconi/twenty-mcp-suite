@@ -23,3 +23,10 @@ export {
   resolveActiveConnection,
 } from "./auth/registry.js";
 export type { ConnectionConfig, RegistryFile } from "./auth/registry.js";
+export {
+  registerClient,
+  buildAuthorizeUrl,
+  exchangeCode,
+  refreshToken,
+} from "./auth/oauthClient.js";
+export type { TokenResponse } from "./auth/oauthClient.js";
