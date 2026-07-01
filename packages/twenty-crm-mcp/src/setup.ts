@@ -152,6 +152,94 @@ export function parseSetupArgs(args: string[]): SetupCommand | { error: string }
   return { kind: "install-skill", scope };
 }
 
+export async function runSetupNonInteractive(cmd: SetupCommand, deps: SetupDeps): Promise<number> {
+  if (cmd.kind === "interactive") return runSetup(deps); // defensive; cli.ts routes bare setup to runSetup directly
+  const reg: RegistryFile = deps.loadRegistry() ?? { connections: {} };
+
+  if (cmd.kind === "add") {
+    if (reg.connections[cmd.label]) {
+      deps.err(`A connection named "${cmd.label}" already exists. Use --edit to change it.`);
+      return 1;
+    }
+    const cfg: ConnectionConfig = { baseUrl: cmd.url, auth: cmd.auth };
+    const next = upsertConnection(reg, cmd.label, cfg);
+    deps.saveRegistry(next);
+    if (cmd.auth === "oauth") {
+      deps.out(`Added "${cmd.label}". Sign in with: twenty-mcp login ${cmd.label}`);
+    } else {
+      deps.out(
+        `Added "${cmd.label}". Set ${envKeyForLabel(cmd.label)}=<your-key> ` +
+          `(or TWENTY_API_KEY) in the environment before starting the server.`,
+      );
+    }
+    printConnections(deps, next);
+    return 0;
+  }
+
+  if (cmd.kind === "edit") {
+    const cur = reg.connections[cmd.label];
+    if (!cur) {
+      deps.err(`Unknown connection "${cmd.label}".`);
+      return 1;
+    }
+    const cfg: ConnectionConfig = { ...cur };
+    if (cmd.url !== undefined) cfg.baseUrl = cmd.url;
+    if (cmd.auth !== undefined) cfg.auth = cmd.auth;
+
+    const target = cmd.newLabel ?? cmd.label;
+    let next = reg;
+    if (target !== cmd.label) {
+      if (reg.connections[target]) {
+        deps.err(`A connection named "${target}" already exists.`);
+        return 1;
+      }
+      next = removeConnection(next, cmd.label);
+      next = upsertConnection(next, target, cfg);
+      if (reg.defaultConnection === cmd.label) next = setDefaultConnection(next, target);
+      if (cur.auth === "oauth") {
+        deps.out(`Renamed. If "${cmd.label}" was signed in, sign in again with: twenty-mcp login ${target}`);
+      }
+    } else {
+      next = upsertConnection(next, target, cfg);
+    }
+    deps.saveRegistry(next);
+    printConnections(deps, next);
+    return 0;
+  }
+
+  if (cmd.kind === "remove") {
+    if (!reg.connections[cmd.label]) {
+      deps.err(`Unknown connection "${cmd.label}".`);
+      return 1;
+    }
+    const next = removeConnection(reg, cmd.label);
+    deps.saveRegistry(next);
+    if (cmd.purgeCredentials) {
+      const stored = await deps.store.labels();
+      if (stored.includes(cmd.label)) await deps.store.delete(cmd.label);
+    }
+    printConnections(deps, next);
+    return 0;
+  }
+
+  if (cmd.kind === "set-default") {
+    if (!reg.connections[cmd.label]) {
+      deps.err(`Unknown connection "${cmd.label}".`);
+      return 1;
+    }
+    const next = setDefaultConnection(reg, cmd.label);
+    deps.saveRegistry(next);
+    printConnections(deps, next);
+    return 0;
+  }
+
+  // cmd.kind === "install-skill"
+  const dest = cmd.scope === "project" ? deps.skill.projectDest : deps.skill.userDest;
+  deps.skill.install(deps.skill.sourceDir, dest);
+  deps.out(`Installed companion skill → ${dest}`);
+  return 0;
+}
+
 function printConnections(deps: SetupDeps, reg: RegistryFile): void {
   const labels = Object.keys(reg.connections);
   if (labels.length === 0) {

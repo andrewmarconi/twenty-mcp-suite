@@ -106,3 +106,141 @@ describe("parseSetupArgs", () => {
       .toEqual({ error: expect.stringMatching(/action/i) });
   });
 });
+
+import { vi } from "vitest";
+import { runSetupNonInteractive } from "./setup.js";
+import type { RegistryFile } from "twenty-core";
+
+function ndeps(over: Record<string, unknown> = {}) {
+  const saved: RegistryFile[] = [];
+  const d = {
+    prompts: {} as never,
+    loadRegistry: () => ({ connections: {} }) as RegistryFile,
+    saveRegistry: (reg: RegistryFile) => { saved.push(reg); },
+    store: { get: vi.fn(), set: vi.fn(), delete: vi.fn().mockResolvedValue(undefined), labels: vi.fn().mockResolvedValue([]) },
+    login: vi.fn().mockResolvedValue(undefined),
+    skill: {
+      sourceDir: "/pkg/skill/twenty-crm",
+      projectDest: "/proj/.claude/skills/twenty-crm",
+      userDest: "/home/.claude/skills/twenty-crm",
+      exists: () => false,
+      install: vi.fn(),
+    },
+    out: vi.fn(),
+    err: vi.fn(),
+    ...over,
+  };
+  return { saved, d };
+}
+
+const seeded = (): RegistryFile => ({
+  defaultConnection: "acme",
+  connections: {
+    acme: { baseUrl: "https://crm.acme.com", auth: "oauth" },
+    sandbox: { baseUrl: "https://dev.acme.com", auth: "apikey" },
+  },
+});
+
+describe("runSetupNonInteractive — add", () => {
+  it("adds an apikey site, prints the env-var hint, and does not call login", async () => {
+    const { saved, d } = ndeps();
+    const code = await runSetupNonInteractive({ kind: "add", label: "acme", url: "https://crm.acme.com", auth: "apikey" }, d as never);
+    expect(code).toBe(0);
+    expect(saved.at(-1)!.connections.acme).toEqual({ baseUrl: "https://crm.acme.com", auth: "apikey" });
+    expect(d.out).toHaveBeenCalledWith(expect.stringMatching(/TWENTY_API_KEY_ACME/));
+    expect(d.login).not.toHaveBeenCalled();
+  });
+
+  it("adds an oauth site, prints the login hint, and does not call login", async () => {
+    const { saved, d } = ndeps();
+    const code = await runSetupNonInteractive({ kind: "add", label: "acme", url: "https://crm.acme.com", auth: "oauth" }, d as never);
+    expect(code).toBe(0);
+    expect(saved.at(-1)!.connections.acme.auth).toBe("oauth");
+    expect(d.out).toHaveBeenCalledWith(expect.stringMatching(/twenty-mcp login acme/));
+    expect(d.login).not.toHaveBeenCalled();
+  });
+
+  it("errors (exit 1) and writes nothing when the label already exists", async () => {
+    const { saved, d } = ndeps({ loadRegistry: () => seeded() });
+    const code = await runSetupNonInteractive({ kind: "add", label: "acme", url: "https://x.io", auth: "apikey" }, d as never);
+    expect(code).toBe(1);
+    expect(saved).toHaveLength(0);
+    expect(d.err).toHaveBeenCalledWith(expect.stringMatching(/already exists/));
+  });
+});
+
+describe("runSetupNonInteractive — edit", () => {
+  it("changes only the provided field", async () => {
+    const { saved, d } = ndeps({ loadRegistry: () => seeded() });
+    const code = await runSetupNonInteractive({ kind: "edit", label: "acme", url: "https://new.acme.com" }, d as never);
+    expect(code).toBe(0);
+    expect(saved.at(-1)!.connections.acme.baseUrl).toBe("https://new.acme.com");
+    expect(saved.at(-1)!.connections.acme.auth).toBe("oauth"); // unchanged
+  });
+
+  it("renames a site and moves the default with it", async () => {
+    const { saved, d } = ndeps({ loadRegistry: () => seeded() });
+    await runSetupNonInteractive({ kind: "edit", label: "acme", newLabel: "acme-prod" }, d as never);
+    const last = saved.at(-1)!;
+    expect(last.connections.acme).toBeUndefined();
+    expect(last.connections["acme-prod"]).toBeDefined();
+    expect(last.defaultConnection).toBe("acme-prod");
+    expect(d.out).toHaveBeenCalledWith(expect.stringMatching(/twenty-mcp login acme-prod/));
+  });
+
+  it("errors when the label is unknown", async () => {
+    const { saved, d } = ndeps({ loadRegistry: () => seeded() });
+    const code = await runSetupNonInteractive({ kind: "edit", label: "nope", url: "https://x.io" }, d as never);
+    expect(code).toBe(1);
+    expect(saved).toHaveLength(0);
+  });
+});
+
+describe("runSetupNonInteractive — remove", () => {
+  it("removes the entry and purges credentials when asked and a token exists", async () => {
+    const store = { get: vi.fn(), set: vi.fn(), delete: vi.fn().mockResolvedValue(undefined), labels: vi.fn().mockResolvedValue(["acme"]) };
+    const { saved, d } = ndeps({ loadRegistry: () => seeded(), store });
+    const code = await runSetupNonInteractive({ kind: "remove", label: "acme", purgeCredentials: true }, d as never);
+    expect(code).toBe(0);
+    expect(saved.at(-1)!.connections.acme).toBeUndefined();
+    expect(store.delete).toHaveBeenCalledWith("acme");
+  });
+
+  it("does not purge credentials without the flag", async () => {
+    const store = { get: vi.fn(), set: vi.fn(), delete: vi.fn().mockResolvedValue(undefined), labels: vi.fn().mockResolvedValue(["acme"]) };
+    const { d } = ndeps({ loadRegistry: () => seeded(), store });
+    await runSetupNonInteractive({ kind: "remove", label: "acme", purgeCredentials: false }, d as never);
+    expect(store.delete).not.toHaveBeenCalled();
+  });
+
+  it("errors when the label is unknown", async () => {
+    const { saved, d } = ndeps({ loadRegistry: () => seeded() });
+    const code = await runSetupNonInteractive({ kind: "remove", label: "nope", purgeCredentials: false }, d as never);
+    expect(code).toBe(1);
+    expect(saved).toHaveLength(0);
+  });
+});
+
+describe("runSetupNonInteractive — set-default & install-skill", () => {
+  it("sets the default connection", async () => {
+    const { saved, d } = ndeps({ loadRegistry: () => seeded() });
+    const code = await runSetupNonInteractive({ kind: "set-default", label: "sandbox" }, d as never);
+    expect(code).toBe(0);
+    expect(saved.at(-1)!.defaultConnection).toBe("sandbox");
+  });
+
+  it("errors on set-default of an unknown label", async () => {
+    const { saved, d } = ndeps({ loadRegistry: () => seeded() });
+    const code = await runSetupNonInteractive({ kind: "set-default", label: "nope" }, d as never);
+    expect(code).toBe(1);
+    expect(saved).toHaveLength(0);
+  });
+
+  it("installs the skill to the chosen scope, overwriting silently", async () => {
+    const { d } = ndeps();
+    const code = await runSetupNonInteractive({ kind: "install-skill", scope: "project" }, d as never);
+    expect(code).toBe(0);
+    expect(d.skill.install).toHaveBeenCalledWith("/pkg/skill/twenty-crm", "/proj/.claude/skills/twenty-crm");
+    expect(d.out).toHaveBeenCalledWith(expect.stringMatching(/Installed companion skill/));
+  });
+});
