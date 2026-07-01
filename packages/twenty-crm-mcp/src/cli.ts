@@ -8,7 +8,13 @@ import {
   type TokenStore,
   type RegistryFile,
 } from "twenty-core";
-import { runSetup, type SetupDeps } from "./setup.js";
+import {
+  runSetup,
+  runSetupNonInteractive,
+  parseSetupArgs,
+  type SetupDeps,
+  type SetupCommand,
+} from "./setup.js";
 import { clackPrompts } from "./prompts.js";
 import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
@@ -20,6 +26,7 @@ export interface CliDeps {
   loadRegistry: () => RegistryFile | null;
   login: typeof loginConnection;
   runSetup: () => Promise<number>;
+  runSetupNonInteractive: (cmd: SetupCommand) => Promise<number>;
   out: (msg: string) => void;
   err: (msg: string) => void;
 }
@@ -31,6 +38,7 @@ export function realDeps(env: NodeJS.ProcessEnv): CliDeps {
     loadRegistry: () => loadRegistryFile(connectionsPath(env)),
     login: loginConnection,
     runSetup: () => runSetup(realSetupDeps(env)),
+    runSetupNonInteractive: (cmd) => runSetupNonInteractive(cmd, realSetupDeps(env)),
     out: (m) => console.log(m),
     err: (m) => console.error(m),
   };
@@ -61,7 +69,15 @@ export function realSetupDeps(env: NodeJS.ProcessEnv): SetupDeps {
 }
 
 const USAGE =
-  "usage: twenty-mcp <setup | login <label> | connections | logout <label>>";
+  "usage: twenty-mcp <\n" +
+  "  setup                                             interactive TUI\n" +
+  "  setup --add <label> --url <url> --auth <oauth|apikey>\n" +
+  "  setup --edit <label> [--url <url>] [--auth <mode>] [--label <new>]\n" +
+  "  setup --remove <label> [--purge-credentials]\n" +
+  "  setup --set-default <label>\n" +
+  "  setup --install-skill --scope <project|user>\n" +
+  "  login <label> | connections | logout <label>\n" +
+  ">";
 
 export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
   const [cmd, label] = argv;
@@ -109,7 +125,13 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
   }
 
   if (cmd === "setup") {
-    return deps.runSetup();
+    const parsed = parseSetupArgs(argv.slice(1));
+    if ("error" in parsed) {
+      deps.err(parsed.error);
+      return 1;
+    }
+    if (parsed.kind === "interactive") return deps.runSetup();
+    return deps.runSetupNonInteractive(parsed);
   }
 
   deps.err(USAGE);

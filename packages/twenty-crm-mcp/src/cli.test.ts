@@ -16,6 +16,7 @@ function deps(over: Record<string, unknown> = {}) {
     }),
     login: vi.fn().mockResolvedValue(undefined),
     runSetup: vi.fn().mockResolvedValue(0),
+    runSetupNonInteractive: vi.fn().mockResolvedValue(0),
     out: vi.fn(),
     err: vi.fn(),
     ...over,
@@ -72,6 +73,36 @@ describe("runCli", () => {
     const d = deps();
     await runCli(["frobnicate"], d as never);
     expect(d.err).toHaveBeenCalledWith(expect.stringMatching(/setup/));
+  });
+
+  it("bare setup delegates to the interactive runSetup", async () => {
+    const d = deps();
+    const code = await runCli(["setup"], d as never);
+    expect(code).toBe(0);
+    expect(d.runSetup).toHaveBeenCalled();
+    expect(d.runSetupNonInteractive).not.toHaveBeenCalled();
+  });
+
+  it("setup with an action flag delegates to runSetupNonInteractive with the parsed command", async () => {
+    const d = deps();
+    const code = await runCli(
+      ["setup", "--add", "acme", "--url", "https://crm.acme.com", "--auth", "apikey"],
+      d as never,
+    );
+    expect(code).toBe(0);
+    expect(d.runSetupNonInteractive).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "add", label: "acme", url: "https://crm.acme.com", auth: "apikey" }),
+    );
+    expect(d.runSetup).not.toHaveBeenCalled();
+  });
+
+  it("setup with a bad flag returns 1 and reports the error", async () => {
+    const d = deps();
+    const code = await runCli(["setup", "--add", "acme", "--url", "not-a-url", "--auth", "apikey"], d as never);
+    expect(code).toBe(1);
+    expect(d.err).toHaveBeenCalledWith(expect.stringMatching(/url/i));
+    expect(d.runSetup).not.toHaveBeenCalled();
+    expect(d.runSetupNonInteractive).not.toHaveBeenCalled();
   });
 });
 
