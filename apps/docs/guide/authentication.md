@@ -14,15 +14,15 @@ It uses Twenty's OAuth 2.0 authorization-code flow with PKCE, **dynamic client r
 
 ### Sign in
 
-1. Create a [connection registry](/guide/connections) at `~/.config/twenty-mcp/connections.json`.
-
-2. Sign in once with the bundled `twenty-mcp` CLI (opens your browser):
+1. Run the interactive setup to register an OAuth connection and sign in — it opens your browser right after adding the site:
 
    ```bash
-   twenty-mcp login acme
+   npx twenty-crm-mcp setup   # or: twenty-mcp setup
    ```
 
-   The refresh token is stored **encrypted** (AES-256-GCM) under `~/.config/twenty-mcp/`, with the key file at mode `0600`. Nothing sensitive is written in plaintext. Access tokens refresh automatically; you sign in again only if the refresh token is revoked or expires.
+   Prefer to do it manually? Create a [connection registry](/guide/connections) at `~/.config/twenty-mcp/connections.json`, then sign in with `twenty-mcp login <label>` (e.g. `twenty-mcp login acme`).
+
+2. Either way, the refresh token is stored **encrypted** (AES-256-GCM) under `~/.config/twenty-mcp/`, with the key file at mode `0600`. Nothing sensitive is written in plaintext. Access tokens refresh automatically; you sign in again only if the refresh token is revoked or expires.
 
 3. Run the server against that connection:
 

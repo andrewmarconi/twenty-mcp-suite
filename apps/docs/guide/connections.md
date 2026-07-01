@@ -2,9 +2,27 @@
 
 Connections let you register one or more Twenty instances and pick which one a server run targets — useful if you manage several instances (production and staging, or multiple orgs).
 
-## The registry
+## Interactive setup (recommended)
 
-Create `~/.config/twenty-mcp/connections.json`:
+`twenty-mcp setup` is an interactive way to create and manage your connection registry — no hand-editing JSON. It works identically on macOS and Windows.
+
+```bash
+npx twenty-crm-mcp setup   # or, if twenty-mcp is on your PATH: twenty-mcp setup
+```
+
+It opens a menu that lets you:
+
+- **Add a site** — enter a label, base URL, and auth method (`oauth` or `apikey`).
+- **Edit or remove** an existing site.
+- **Set the default** connection.
+- For an **OAuth** site, start the browser sign-in immediately after adding it.
+- For an **API-key** site, print the exact environment variable to set (`TWENTY_API_KEY_<LABEL>`).
+
+Changes are saved after each step, so quitting partway through keeps what you already added. **No secrets are written to the registry** — API keys stay in your environment, and OAuth tokens are stored encrypted separately (see [Authentication](/guide/authentication)).
+
+## The registry file
+
+`setup` reads and writes `~/.config/twenty-mcp/connections.json` (override the path with `TWENTY_MCP_CONFIG`, or the directory with `XDG_CONFIG_HOME`). You can also create or edit it by hand:
 
 ```json
 {
@@ -22,6 +40,7 @@ Each connection is either `oauth` (browser sign-in) or `apikey`. Select the acti
 ## The `twenty-mcp` CLI
 
 ```bash
+twenty-mcp setup               # interactive: create/edit connections, set default, sign in
 twenty-mcp login <label>       # browser sign-in for an oauth connection
 twenty-mcp connections         # list configured connections + signed-in state
 twenty-mcp logout <label>      # remove stored tokens for a connection
