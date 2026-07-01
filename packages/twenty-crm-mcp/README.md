@@ -55,10 +55,13 @@ Sign in through your browser so the assistant acts as **you**, inheriting your T
 
    ### Setup
 
-   Run the interactive connection manager to create or edit `connections.json`:
+   Run the interactive connection manager to create or edit `connections.json`.
+   The `setup` command lives in the bundled `twenty-mcp` CLI (a separate bin from
+   the server), so invoke it via `npx -p` — or drop the `npx -p twenty-crm-mcp`
+   prefix if the package is installed:
 
    ```bash
-   npx twenty-crm-mcp setup   # or: twenty-mcp setup
+   npx -p twenty-crm-mcp twenty-mcp setup
    ```
 
    It lets you add, edit, remove, and default Twenty sites, and can start the OAuth
@@ -78,12 +81,12 @@ Sign in through your browser so the assistant acts as **you**, inheriting your T
    }
    ```
 
-2. Sign in once with the bundled `twenty-mcp` CLI (opens your browser). The refresh token is stored **encrypted** (AES-256-GCM) under `~/.config/twenty-mcp/`, with the key file at mode `0600`; nothing sensitive is written in plaintext:
+2. Sign in once with the bundled `twenty-mcp` CLI (opens your browser). The refresh token is stored **encrypted** (AES-256-GCM) under `~/.config/twenty-mcp/`, with the key file at mode `0600`; nothing sensitive is written in plaintext. Prefix each command with `npx -p twenty-crm-mcp` unless the package is installed:
 
    ```bash
-   twenty-mcp login acme
-   twenty-mcp connections     # list configured connections + signed-in state
-   twenty-mcp logout acme     # remove stored tokens for a connection
+   npx -p twenty-crm-mcp twenty-mcp login acme
+   npx -p twenty-crm-mcp twenty-mcp connections   # list connections + signed-in state
+   npx -p twenty-crm-mcp twenty-mcp logout acme   # remove stored tokens for a connection
    ```
 
 3. Run the server against that connection (access tokens refresh automatically):
@@ -152,7 +155,7 @@ A Claude Skill ships alongside the server with the operational knowledge to use 
 The recommended way to install it is the interactive setup command, which offers to install the skill after you add your first connection (and exposes an **Install companion skill** menu action you can run any time):
 
 ```bash
-twenty-mcp setup
+npx -p twenty-crm-mcp twenty-mcp setup
 ```
 
 It prompts for a **project** (`./.claude/skills/twenty-crm`) or **user** (`~/.claude/skills/twenty-crm`) install, and overwrites an existing copy only after you confirm.
