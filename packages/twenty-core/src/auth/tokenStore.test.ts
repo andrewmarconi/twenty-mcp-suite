@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync, readFileSync, statSync } from "node:fs";
+import {
+  mkdtempSync,
+  rmSync,
+  readFileSync,
+  writeFileSync,
+  statSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FileTokenStore, type TokenRecord } from "./tokenStore.js";
@@ -53,6 +59,42 @@ describe("FileTokenStore", () => {
   it("a second store instance on the same dir decrypts existing records", async () => {
     await new FileTokenStore(dir).set("acme", rec);
     expect(await new FileTokenStore(dir).get("acme")).toEqual(rec);
+  });
+
+  it("throws a descriptive error when tokens.json is corrupt (invalid JSON)", async () => {
+    const store = new FileTokenStore(dir);
+    await store.set("acme", rec);
+    writeFileSync(join(dir, "tokens.json"), "{ not valid json", "utf8");
+    await expect(store.get("acme")).rejects.toThrow(/corrupt|invalid/i);
+  });
+
+  it("throws a descriptive error when a record's ciphertext is tampered with", async () => {
+    const store = new FileTokenStore(dir);
+    await store.set("acme", rec);
+    const dataPath = join(dir, "tokens.json");
+    const all = JSON.parse(readFileSync(dataPath, "utf8"));
+    // Flip the stored ciphertext so GCM auth-tag verification fails.
+    all.acme.ct = Buffer.from("tampered-ciphertext-bytes!!").toString("base64");
+    writeFileSync(dataPath, JSON.stringify(all, null, 2), "utf8");
+    await expect(store.get("acme")).rejects.toThrow(/corrupt|tamper/i);
+  });
+
+  it("throws a descriptive error when a record's auth tag is tampered with", async () => {
+    const store = new FileTokenStore(dir);
+    await store.set("acme", rec);
+    const dataPath = join(dir, "tokens.json");
+    const all = JSON.parse(readFileSync(dataPath, "utf8"));
+    all.acme.tag = Buffer.from(Array(16).fill(0)).toString("base64");
+    writeFileSync(dataPath, JSON.stringify(all, null, 2), "utf8");
+    await expect(store.get("acme")).rejects.toThrow(/corrupt|tamper/i);
+  });
+
+  it("throws a descriptive error when store.key is not 32 bytes", async () => {
+    const store = new FileTokenStore(dir);
+    await store.set("acme", rec); // creates a valid store.key on first write
+    writeFileSync(join(dir, "store.key"), Buffer.from("too-short"));
+    const fresh = new FileTokenStore(dir);
+    await expect(fresh.get("acme")).rejects.toThrow(/key/i);
   });
 
   afterEach(() => rmSync(dir, { recursive: true, force: true }));

@@ -70,7 +70,15 @@ export class FileTokenStore implements TokenStore {
     if (!existsSync(this.keyPath)) {
       writeFileSync(this.keyPath, randomBytes(32), { mode: 0o600 });
     }
-    return readFileSync(this.keyPath);
+    const key = readFileSync(this.keyPath);
+    if (key.length !== 32) {
+      throw new Error(
+        `twenty-mcp: key file at ${this.keyPath} is not a valid 32-byte key. ` +
+          `Delete it and re-authenticate (this will invalidate any stored tokens), ` +
+          `or restore the original key file.`,
+      );
+    }
+    return key;
   }
 
   private encrypt(plaintext: string): Blob {
@@ -85,21 +93,36 @@ export class FileTokenStore implements TokenStore {
   }
 
   private decrypt(blob: Blob): string {
-    const decipher = createDecipheriv(
-      "aes-256-gcm",
-      this.key(),
-      Buffer.from(blob.iv, "base64"),
-    );
-    decipher.setAuthTag(Buffer.from(blob.tag, "base64"));
-    return Buffer.concat([
-      decipher.update(Buffer.from(blob.ct, "base64")),
-      decipher.final(),
-    ]).toString("utf8");
+    try {
+      const decipher = createDecipheriv(
+        "aes-256-gcm",
+        this.key(),
+        Buffer.from(blob.iv, "base64"),
+      );
+      decipher.setAuthTag(Buffer.from(blob.tag, "base64"));
+      return Buffer.concat([
+        decipher.update(Buffer.from(blob.ct, "base64")),
+        decipher.final(),
+      ]).toString("utf8");
+    } catch (err) {
+      throw new Error(
+        `twenty-mcp: token store record is corrupt or was tampered with, or the key file changed. ` +
+          `Run 'twenty-mcp logout <label>' to remove it and re-authenticate.`,
+      );
+    }
   }
 
   private readAll(): Record<string, Blob> {
     if (!existsSync(this.dataPath)) return {};
-    return JSON.parse(readFileSync(this.dataPath, "utf8")) as Record<string, Blob>;
+    const raw = readFileSync(this.dataPath, "utf8");
+    try {
+      return JSON.parse(raw) as Record<string, Blob>;
+    } catch {
+      throw new Error(
+        `twenty-mcp: token store at ${this.dataPath} is corrupt (invalid JSON). ` +
+          `Delete the file and re-authenticate, or run 'twenty-mcp logout <label>'.`,
+      );
+    }
   }
 
   private writeAll(all: Record<string, Blob>): void {
