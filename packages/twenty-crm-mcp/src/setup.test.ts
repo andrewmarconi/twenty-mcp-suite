@@ -71,3 +71,70 @@ describe("runSetup — add flow", () => {
     expect(saved).toHaveLength(0);
   });
 });
+
+describe("runSetup — edit/remove/default", () => {
+  const seeded = (): RegistryFile => ({
+    defaultConnection: "acme",
+    connections: {
+      acme: { baseUrl: "https://crm.acme.com", auth: "oauth" },
+      sandbox: { baseUrl: "https://dev.acme.com", auth: "apikey" },
+    },
+  });
+
+  it("edits a site's baseUrl (no rename)", async () => {
+    // menu:edit, pick:acme, newLabel:acme, baseUrl, auth, menu:done
+    const { saved, d } = deps(
+      ["edit", "acme", "acme", "https://new.acme.com", "oauth", "done"],
+      { loadRegistry: () => seeded() },
+    );
+    const code = await runSetup(d as never);
+    expect(code).toBe(0);
+    expect(saved.at(-1)!.connections.acme.baseUrl).toBe("https://new.acme.com");
+  });
+
+  it("renames a site and moves the default with it", async () => {
+    // menu:edit, pick:acme, newLabel:acme-prod, baseUrl, auth, menu:done
+    const { saved, d } = deps(
+      ["edit", "acme", "acme-prod", "https://crm.acme.com", "oauth", "done"],
+      { loadRegistry: () => seeded() },
+    );
+    await runSetup(d as never);
+    const last = saved.at(-1)!;
+    expect(last.connections.acme).toBeUndefined();
+    expect(last.connections["acme-prod"]).toBeDefined();
+    expect(last.defaultConnection).toBe("acme-prod");
+  });
+
+  it("removes a site after confirmation and offers to delete stored credentials", async () => {
+    // menu:remove, pick:acme, confirm(remove):true, confirm(del creds):true, menu:done
+    const store = { get: vi.fn(), set: vi.fn(), delete: vi.fn().mockResolvedValue(undefined), labels: vi.fn().mockResolvedValue(["acme"]) };
+    const { saved, d } = deps(
+      ["remove", "acme", true, true, "done"],
+      { loadRegistry: () => seeded(), store },
+    );
+    await runSetup(d as never);
+    expect(saved.at(-1)!.connections.acme).toBeUndefined();
+    expect(store.delete).toHaveBeenCalledWith("acme");
+  });
+
+  it("does not remove when the confirmation is declined", async () => {
+    const { saved, d } = deps(
+      ["remove", "sandbox", false, "done"],
+      { loadRegistry: () => seeded() },
+    );
+    await runSetup(d as never);
+    // no save happened for the decline; final registry still has sandbox
+    const anySavedWithoutSandbox = saved.some((r) => !r.connections.sandbox);
+    expect(anySavedWithoutSandbox).toBe(false);
+  });
+
+  it("sets the default connection", async () => {
+    // menu:default, pick:sandbox, menu:done
+    const { saved, d } = deps(
+      ["default", "sandbox", "done"],
+      { loadRegistry: () => seeded() },
+    );
+    await runSetup(d as never);
+    expect(saved.at(-1)!.defaultConnection).toBe("sandbox");
+  });
+});
