@@ -40,6 +40,20 @@ export const crmProfile: CapabilityProfile = {
     },
     { from: "query_records" },
     { from: "get_record" },
+    {
+      from: "get_record",
+      as: "get_contact_brief",
+      bind: { object: "people", depth: 1 },
+      description:
+        "Fetch one person (by id) together with their related company, notes, tasks, opportunities, and recent activity (one level deep).",
+    },
+    {
+      from: "get_record",
+      as: "get_account_snapshot",
+      bind: { object: "companies", depth: 1 },
+      description:
+        "Fetch one company (by id) together with its related people, opportunities, notes, and tasks (one level deep).",
+    },
     { from: "search" },
     {
       from: "create_records",

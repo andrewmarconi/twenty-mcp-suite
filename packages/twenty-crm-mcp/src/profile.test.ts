@@ -13,7 +13,7 @@ function corePrimitives(): ToolDef[] {
   return names.map((name) => ({
     name,
     description: `${name} primitive.`,
-    inputSchema: z.object({ object: z.string().optional() }),
+    inputSchema: z.object({ object: z.string().optional(), id: z.string().optional(), depth: z.number().optional() }),
     handler: async () => "[]",
   }));
 }
@@ -33,5 +33,18 @@ describe("crmProfile", () => {
     expect(names).toContain("find_companies");
     expect(new Set(names).size).toBe(names.length); // unique
     // building did not throw → every `from` maps to a real primitive
+  });
+
+  it("exposes depth-bound composite reads that take only an id", () => {
+    const tools = buildProfileTools(crmProfile, corePrimitives(), cache);
+    const brief = tools.find((t) => t.name === "get_contact_brief")!;
+    const snapshot = tools.find((t) => t.name === "get_account_snapshot")!;
+    expect(brief).toBeDefined();
+    expect(snapshot).toBeDefined();
+    // object + depth are bound, so they are omitted from the exposed schema (only `id` remains):
+    const briefShape = (brief.inputSchema as import("zod").ZodObject<any>).shape;
+    expect("object" in briefShape).toBe(false);
+    expect("depth" in briefShape).toBe(false);
+    expect("id" in briefShape).toBe(true);
   });
 });
