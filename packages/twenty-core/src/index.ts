@@ -37,3 +37,5 @@ export { parseCallback, startLoopback, openBrowser } from "./auth/loopback.js";
 export type { LoopbackServer } from "./auth/loopback.js";
 export { loginConnection } from "./auth/loginFlow.js";
 export type { LoginDeps } from "./auth/loginFlow.js";
+export { buildProfileTools } from "./profile/buildProfileTools.js";
+export type { CapabilityProfile, ProfileToolSpec } from "./profile/types.js";
