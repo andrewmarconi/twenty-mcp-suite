@@ -13,7 +13,7 @@ Twenty **v2.17.2**.
 
 ## Monorepo layout
 
-pnpm workspaces (`pnpm-workspace.yaml`), Node **>= 20** (native global `fetch`). Two published-shaped
+pnpm workspaces (`pnpm-workspace.yaml`), Node **>= 22** (native global `fetch`). Two published-shaped
 packages plus a docs app:
 
 - **`packages/twenty-core`** — the reusable engine. Transport-agnostic: schema cache, REST/GraphQL
