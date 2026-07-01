@@ -51,7 +51,22 @@ Provide `TWENTY_BASE_URL` + `TWENTY_API_KEY` (a key created in Twenty under Sett
 
 Sign in through your browser so the assistant acts as **you**, inheriting your Twenty role (object/field/row permissions enforced by Twenty), with no long-lived key to manage. It uses Twenty's OAuth 2.0 authorization-code + PKCE flow with dynamic client registration ([RFC 7591](https://datatracker.ietf.org/doc/html/rfc7591)) and endpoint discovery ([RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414)), so it adapts to your instance automatically: public or confidential client, whatever endpoints your version exposes.
 
-1. Create a connection registry at `~/.config/twenty-mcp/connections.json` (list one or more instances; pick one per server run with `TWENTY_CONNECTION`):
+1. Create a connection registry at `~/.config/twenty-mcp/connections.json` (list one or more instances; pick one per server run with `TWENTY_CONNECTION`). You can write this by hand, or use the interactive `setup` command:
+
+   ### Setup
+
+   Run the interactive connection manager to create or edit `connections.json`:
+
+   ```bash
+   npx twenty-crm-mcp setup   # or: twenty-mcp setup
+   ```
+
+   It lets you add, edit, remove, and default Twenty sites, and can start the OAuth
+   browser sign-in immediately after adding an OAuth site. For API-key sites it prints
+   the exact environment variable to set (`TWENTY_API_KEY_<LABEL>`). No secrets are
+   written to `connections.json`.
+
+   Or write the file directly:
 
    ```json
    {

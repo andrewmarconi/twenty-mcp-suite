@@ -1,17 +1,21 @@
 import {
   loginConnection,
   loadRegistryFile,
+  saveRegistryFile,
   FileTokenStore,
   defaultConfigDir,
   type TokenStore,
   type RegistryFile,
 } from "twenty-core";
 import { join } from "node:path";
+import { runSetup, type SetupDeps } from "./setup.js";
+import { clackPrompts } from "./prompts.js";
 
 export interface CliDeps {
   store: TokenStore;
   loadRegistry: () => RegistryFile | null;
   login: typeof loginConnection;
+  runSetup: (deps: SetupDeps) => Promise<number>;
   out: (msg: string) => void;
   err: (msg: string) => void;
 }
@@ -23,13 +27,28 @@ export function realDeps(env: NodeJS.ProcessEnv): CliDeps {
     loadRegistry: () =>
       loadRegistryFile(env.TWENTY_MCP_CONFIG?.trim() ?? join(dir, "connections.json")),
     login: loginConnection,
+    runSetup: (setupDeps) => runSetup(setupDeps),
+    out: (m) => console.log(m),
+    err: (m) => console.error(m),
+  };
+}
+
+export function realSetupDeps(env: NodeJS.ProcessEnv): SetupDeps {
+  const dir = defaultConfigDir(env);
+  const path = env.TWENTY_MCP_CONFIG?.trim() ?? join(dir, "connections.json");
+  return {
+    prompts: clackPrompts(),
+    loadRegistry: () => loadRegistryFile(path),
+    saveRegistry: (reg) => saveRegistryFile(path, reg),
+    store: new FileTokenStore(dir),
+    login: loginConnection,
     out: (m) => console.log(m),
     err: (m) => console.error(m),
   };
 }
 
 const USAGE =
-  "usage: twenty-mcp <login <label> | connections | logout <label>>";
+  "usage: twenty-mcp <setup | login <label> | connections | logout <label>>";
 
 export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
   const [cmd, label] = argv;
@@ -74,6 +93,10 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
     await deps.store.delete(label);
     deps.out(`Logged out of "${label}".`);
     return 0;
+  }
+
+  if (cmd === "setup") {
+    return deps.runSetup(realSetupDeps(process.env));
   }
 
   deps.err(USAGE);
