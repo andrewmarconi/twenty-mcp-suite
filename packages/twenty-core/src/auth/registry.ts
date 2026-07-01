@@ -17,7 +17,10 @@ export interface RegistryFile {
 }
 
 function stripTrailingSlash(url: string): string {
-  return url.replace(/\/+$/, "");
+  // Linear trailing-slash trim (avoids ReDoS from an unanchored `/\/+$/` search).
+  let end = url.length;
+  while (end > 0 && url.charCodeAt(end - 1) === 47 /* "/" */) end--;
+  return url.slice(0, end);
 }
 
 export function envKeyForLabel(label: string): string {

@@ -17,7 +17,10 @@ export interface OAuthServerMetadata {
 export const DEFAULT_TOKEN_TTL_SECONDS = 300;
 
 function stripSlash(url: string): string {
-  return url.replace(/\/+$/, "");
+  // Linear trailing-slash trim (avoids ReDoS from an unanchored `/\/+$/` search).
+  let end = url.length;
+  while (end > 0 && url.charCodeAt(end - 1) === 47 /* "/" */) end--;
+  return url.slice(0, end);
 }
 
 function asObject(parsed: unknown): Record<string, unknown> {
