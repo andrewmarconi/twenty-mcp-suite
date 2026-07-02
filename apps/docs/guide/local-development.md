@@ -17,7 +17,7 @@ pnpm build
 packages/twenty-crm-mcp/dist/index.js
 ```
 
-It's executable (`#!/usr/bin/env node` banner). tsup **bundles `twenty-core` into the output** (`noExternal`), but keeps `@modelcontextprotocol/sdk` and `zod` external — so the file still needs the package's `node_modules` at runtime. Always launch it by its **absolute path inside the repo** so Node resolves those externals; don't copy `dist/index.js` elsewhere.
+It's executable (`#!/usr/bin/env node` banner). tsup keeps `twenty-core`, `@modelcontextprotocol/sdk`, and `zod` **external**, so the file imports all three at runtime from the repo's `node_modules` — including the workspace symlink to `twenty-core` (which must be built first; `pnpm build` does this in dependency order). Always launch it by its **absolute path inside the repo** so Node resolves those dependencies; don't copy `dist/index.js` elsewhere.
 
 ## Register with Claude Code
 
