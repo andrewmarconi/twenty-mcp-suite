@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { OAuthProvider } from "./oauthProvider.js";
-import type { TokenRecord, TokenStore } from "./tokenStore.js";
+import type { StoredCredential, TokenRecord, TokenStore } from "./tokenStore.js";
 
-function memStore(initial?: TokenRecord): TokenStore {
-  let rec = initial ?? null;
+function memStore(initial?: StoredCredential): TokenStore {
+  let rec: StoredCredential | null = initial ?? null;
   return {
     get: async () => rec,
     set: async (_l, r) => {
@@ -17,6 +17,7 @@ function memStore(initial?: TokenRecord): TokenStore {
 }
 
 const base: TokenRecord = {
+  kind: "oauth",
   clientId: "cid",
   clientSecret: "csec",
   tokenEndpoint: "https://crm.example.com/oauth/token",
@@ -27,6 +28,14 @@ describe("OAuthProvider", () => {
   it("throws an actionable login hint when no record is stored", async () => {
     const p = new OAuthProvider({ label: "acme", store: memStore() });
     await expect(p.getBearer()).rejects.toThrow(/twenty-mcp login acme/);
+  });
+
+  it("throws an actionable error when the stored credential is an API key record", async () => {
+    const p = new OAuthProvider({
+      label: "acme",
+      store: memStore({ kind: "apikey", apiKey: "k" }),
+    });
+    await expect(p.getBearer()).rejects.toThrow(/API key/i);
   });
 
   it("returns a cached, unexpired access token without refreshing", async () => {
@@ -63,7 +72,7 @@ describe("OAuthProvider", () => {
     });
     expect(setSpy).toHaveBeenCalled();
     // rotated refresh token persisted
-    expect((await store.get("acme"))!.refreshToken).toBe("rt2");
+    expect(((await store.get("acme")) as TokenRecord).refreshToken).toBe("rt2");
   });
 
   it("refreshes a public client (no clientSecret) using the record's tokenEndpoint", async () => {
@@ -110,7 +119,7 @@ describe("OAuthProvider", () => {
       refreshFn: refreshFn as never,
     });
     expect(await p.getBearer()).toBe("fresh");
-    const rec = (await store.get("acme"))!;
+    const rec = (await store.get("acme")) as TokenRecord;
     expect(rec.expiresAt).toBe(5_000 + 300 * 1000);
     expect(refreshFn).toHaveBeenCalledTimes(1);
 

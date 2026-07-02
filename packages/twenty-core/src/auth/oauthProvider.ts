@@ -30,6 +30,12 @@ export class OAuthProvider implements CredentialProvider {
         `Not signed in to connection "${this.label}". Run: twenty-mcp login ${this.label}`,
       );
     }
+    if (rec.kind !== "oauth") {
+      throw new Error(
+        `Stored credential for "${this.label}" is an API key, but the connection is ` +
+          `configured for OAuth. Run: twenty-mcp login ${this.label}`,
+      );
+    }
     if (rec.accessToken && rec.expiresAt && this.now() < rec.expiresAt - this.skewMs) {
       return rec.accessToken;
     }

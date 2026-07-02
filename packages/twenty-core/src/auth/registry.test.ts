@@ -14,9 +14,9 @@ import {
   envKeyForLabel,
 } from "./registry.js";
 import type { RegistryFile } from "./registry.js";
-import type { TokenStore, TokenRecord } from "./tokenStore.js";
+import type { TokenStore, StoredCredential } from "./tokenStore.js";
 
-function memStore(rec: TokenRecord | null): TokenStore {
+function memStore(rec: StoredCredential | null): TokenStore {
   return {
     get: async () => rec,
     set: async () => {},
@@ -143,6 +143,7 @@ describe("oauth connections", () => {
       {
         registry,
         store: memStore({
+          kind: "oauth",
           clientId: "cid",
           clientSecret: "csec",
           tokenEndpoint: "https://oauth.acme.com/oauth/token",

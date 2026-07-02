@@ -1,10 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { loginConnection } from "./loginFlow.js";
-import type { TokenRecord, TokenStore } from "./tokenStore.js";
+import type { StoredCredential, TokenStore } from "./tokenStore.js";
 import type { OAuthServerMetadata } from "./oauthClient.js";
 
-function memStore(initial?: TokenRecord): TokenStore & { current: () => TokenRecord | null } {
-  let rec = initial ?? null;
+function memStore(
+  initial?: StoredCredential,
+): TokenStore & { current: () => StoredCredential | null } {
+  let rec: StoredCredential | null = initial ?? null;
   return {
     get: async () => rec,
     set: async (_l, r) => {
@@ -70,11 +72,21 @@ describe("loginConnection", () => {
       }),
     );
     const saved = store.current()!;
+    expect(saved.kind).toBe("oauth");
+    if (saved.kind !== "oauth") throw new Error("unreachable");
     expect(saved.refreshToken).toBe("rt");
     expect(saved.clientId).toBe("cid");
     expect(saved.clientSecret).toBeUndefined();
     expect(saved.tokenEndpoint).toBe(meta.tokenEndpoint);
     expect(saved.accessToken).toBe("at");
+  });
+
+  it("ignores a stored API-key record when looking for an existing client registration", async () => {
+    const store = memStore({ kind: "apikey", apiKey: "k" });
+    const d = deps();
+    await loginConnection({ label: "acme", baseUrl: "https://x", store, port: 52333 }, d as never);
+    expect(d.register).toHaveBeenCalled(); // apikey record is not a client registration
+    expect(store.current()!.kind).toBe("oauth"); // overwritten by the OAuth login
   });
 
   it("registers a confidential client when the server does not support 'none'", async () => {
@@ -96,11 +108,13 @@ describe("loginConnection", () => {
       "http://localhost:52333/callback",
       "client_secret_post",
     );
-    expect(store.current()!.clientSecret).toBe("csec");
+    const confidential = store.current();
+    expect(confidential?.kind === "oauth" ? confidential.clientSecret : undefined).toBe("csec");
   });
 
   it("reuses stored client credentials instead of registering again", async () => {
     const store = memStore({
+      kind: "oauth",
       clientId: "existing",
       clientSecret: "esec",
       tokenEndpoint: "https://crm.example.com/oauth/token",

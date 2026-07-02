@@ -44,7 +44,8 @@ export async function loginConnection(
   deps: LoginDeps = defaultDeps(),
 ): Promise<void> {
   const port = args.port ?? DEFAULT_PORT;
-  const existing = await args.store.get(args.label);
+  const stored = await args.store.get(args.label);
+  const existing = stored?.kind === "oauth" ? stored : null;
   let server: LoopbackServer;
   try {
     server = await deps.startLoopback(port);
@@ -95,6 +96,7 @@ export async function loginConnection(
     });
 
     await args.store.set(args.label, {
+      kind: "oauth",
       clientId,
       clientSecret,
       tokenEndpoint: meta.tokenEndpoint,

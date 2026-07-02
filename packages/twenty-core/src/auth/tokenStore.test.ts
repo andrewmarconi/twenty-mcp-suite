@@ -13,7 +13,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { FileTokenStore, type TokenRecord } from "./tokenStore.js";
+import { FileTokenStore, type StoredCredential, type TokenRecord } from "./tokenStore.js";
 
 let dir: string;
 beforeEach(() => {
@@ -21,6 +21,7 @@ beforeEach(() => {
 });
 
 const rec: TokenRecord = {
+  kind: "oauth",
   clientId: "cid",
   clientSecret: "csecret",
   tokenEndpoint: "https://crm.example.com/oauth/token",
@@ -122,6 +123,29 @@ describe("FileTokenStore — atomic writes", () => {
     await store.delete("acme");
     const leftovers = readdirSync(dir).filter((f) => f.includes(".tmp-"));
     expect(leftovers).toEqual([]);
+  });
+
+  afterEach(() => rmSync(dir, { recursive: true, force: true }));
+});
+
+describe("FileTokenStore — StoredCredential union", () => {
+  it("round-trips an apikey record", async () => {
+    const store = new FileTokenStore(dir);
+    const keyRec: StoredCredential = { kind: "apikey", apiKey: "sk-123" };
+    await store.set("sandbox", keyRec);
+    expect(await store.get("sandbox")).toEqual(keyRec);
+    const raw = readFileSync(join(dir, "tokens.json"), "utf8");
+    expect(raw).not.toContain("sk-123"); // encrypted at rest
+  });
+
+  it("normalizes a legacy record without 'kind' to kind: 'oauth' on read", async () => {
+    const store = new FileTokenStore(dir);
+    // JSON.stringify drops the undefined kind, simulating a pre-union record on disk.
+    const legacy = { ...rec, kind: undefined } as unknown as StoredCredential;
+    await store.set("legacy", legacy);
+    const back = await store.get("legacy");
+    expect(back?.kind).toBe("oauth");
+    expect(back).toMatchObject({ clientId: "cid", refreshToken: "rtok" });
   });
 
   afterEach(() => rmSync(dir, { recursive: true, force: true }));

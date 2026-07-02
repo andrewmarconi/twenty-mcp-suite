@@ -11,7 +11,8 @@ import {
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-export interface TokenRecord {
+export interface OAuthTokenRecord {
+  kind: "oauth";
   clientId: string;
   clientSecret?: string;
   tokenEndpoint: string;
@@ -20,9 +21,19 @@ export interface TokenRecord {
   expiresAt?: number;
 }
 
+export interface ApiKeyRecord {
+  kind: "apikey";
+  apiKey: string;
+}
+
+export type StoredCredential = OAuthTokenRecord | ApiKeyRecord;
+
+/** @deprecated Use OAuthTokenRecord. */
+export type TokenRecord = OAuthTokenRecord;
+
 export interface TokenStore {
-  get(label: string): Promise<TokenRecord | null>;
-  set(label: string, rec: TokenRecord): Promise<void>;
+  get(label: string): Promise<StoredCredential | null>;
+  set(label: string, rec: StoredCredential): Promise<void>;
   delete(label: string): Promise<void>;
   labels(): Promise<string[]>;
 }
@@ -70,14 +81,16 @@ export class FileTokenStore implements TokenStore {
     this.sleep = opts.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
   }
 
-  async get(label: string): Promise<TokenRecord | null> {
+  async get(label: string): Promise<StoredCredential | null> {
     const all = this.readAll();
     const blob = all[label];
     if (!blob) return null;
-    return JSON.parse(this.decrypt(blob)) as TokenRecord;
+    const parsed = JSON.parse(this.decrypt(blob)) as Record<string, unknown>;
+    // Records written before the union have no kind — they are OAuth records.
+    return { kind: "oauth", ...parsed } as StoredCredential;
   }
 
-  async set(label: string, rec: TokenRecord): Promise<void> {
+  async set(label: string, rec: StoredCredential): Promise<void> {
     await this.withLock(() => {
       const all = this.readAll();
       all[label] = this.encrypt(JSON.stringify(rec));
