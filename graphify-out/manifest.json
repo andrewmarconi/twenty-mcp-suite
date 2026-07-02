@@ -335,7 +335,7 @@
     "semantic_hash": "ffe505b9c11494cfadd9b9ed1567e00f"
   },
   "packages/twenty-crm-mcp/tsconfig.json": {
-    "mtime": 1782872469.5363746,
+    "mtime": 1782960181.1567407,
     "ast_hash": "a756e8e1cd2fd4a70666c68992386afe",
     "semantic_hash": "a756e8e1cd2fd4a70666c68992386afe"
   },
@@ -840,8 +840,8 @@
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1782959714.0163302,
-    "ast_hash": "2d6f6beca6cace19fe92f92a8bb0419d",
+    "mtime": 1782960221.691682,
+    "ast_hash": "37a25d73d99c1a53b18b4b9a6e127745",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-01-monorepo-lint-format-typecheck.md": {
