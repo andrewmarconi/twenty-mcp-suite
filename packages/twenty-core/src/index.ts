@@ -3,7 +3,7 @@ export { ApiKeyProvider } from "./auth/apiKeyProvider.js";
 export { OAuthProvider } from "./auth/oauthProvider.js";
 export { generateCodeVerifier, codeChallengeS256 } from "./auth/pkce.js";
 export { FileTokenStore, defaultConfigDir } from "./auth/tokenStore.js";
-export type { TokenStore, TokenRecord } from "./auth/tokenStore.js";
+export type { TokenStore, TokenRecord, FileTokenStoreOptions } from "./auth/tokenStore.js";
 export { RestClient } from "./twenty/restClient.js";
 export { GraphQLClient } from "./twenty/graphqlClient.js";
 export { TwentyApiError, isSchemaDriftError, driftHint } from "./twenty/errors.js";

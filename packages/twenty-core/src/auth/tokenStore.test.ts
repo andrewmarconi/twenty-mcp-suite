@@ -7,6 +7,9 @@ import {
   statSync,
   chmodSync,
   readdirSync,
+  unlinkSync,
+  utimesSync,
+  existsSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -119,6 +122,57 @@ describe("FileTokenStore — atomic writes", () => {
     await store.delete("acme");
     const leftovers = readdirSync(dir).filter((f) => f.includes(".tmp-"));
     expect(leftovers).toEqual([]);
+  });
+
+  afterEach(() => rmSync(dir, { recursive: true, force: true }));
+});
+
+describe("FileTokenStore — lockfile", () => {
+  const lockPath = () => join(dir, "tokens.json.lock");
+
+  it("set() waits for an existing lock and proceeds once it is released", async () => {
+    const store = new FileTokenStore(dir, { lockRetryMs: 5 });
+    writeFileSync(lockPath(), "999999", { flag: "wx" });
+    const pending = store.set("acme", rec);
+    await new Promise((r) => setTimeout(r, 30));
+    expect(await new FileTokenStore(dir).get("acme")).toBeNull(); // still blocked
+    unlinkSync(lockPath());
+    await pending;
+    expect(await new FileTokenStore(dir).get("acme")).toEqual(rec);
+  });
+
+  it("breaks a stale lock and proceeds", async () => {
+    writeFileSync(lockPath(), "999999", { flag: "wx" });
+    const past = new Date(Date.now() - 60_000);
+    utimesSync(lockPath(), past, past);
+    const store = new FileTokenStore(dir, { lockRetryMs: 5, lockStaleMs: 10_000 });
+    await store.set("acme", rec);
+    expect(await store.get("acme")).toEqual(rec);
+  });
+
+  it("times out with an actionable error when the lock never frees", async () => {
+    writeFileSync(lockPath(), "999999", { flag: "wx" });
+    const store = new FileTokenStore(dir, {
+      lockRetryMs: 5,
+      lockTimeoutMs: 50,
+      lockStaleMs: 60_000,
+    });
+    await expect(store.set("acme", rec)).rejects.toThrow(/lock/i);
+  });
+
+  it("removes the lock file after set() and delete()", async () => {
+    const store = new FileTokenStore(dir);
+    await store.set("acme", rec);
+    expect(existsSync(lockPath())).toBe(false);
+    await store.delete("acme");
+    expect(existsSync(lockPath())).toBe(false);
+  });
+
+  it("concurrent set()s from two instances both land", async () => {
+    const a = new FileTokenStore(dir, { lockRetryMs: 5 });
+    const b = new FileTokenStore(dir, { lockRetryMs: 5 });
+    await Promise.all([a.set("a", rec), b.set("b", rec)]);
+    expect((await a.labels()).sort()).toEqual(["a", "b"]);
   });
 
   afterEach(() => rmSync(dir, { recursive: true, force: true }));

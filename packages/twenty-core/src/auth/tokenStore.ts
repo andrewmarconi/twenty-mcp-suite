@@ -1,5 +1,13 @@
 import { randomBytes, createCipheriv, createDecipheriv } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync, existsSync, renameSync } from "node:fs";
+import {
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  renameSync,
+  statSync,
+  unlinkSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -30,13 +38,36 @@ export function defaultConfigDir(env: NodeJS.ProcessEnv = process.env): string {
   return join(base, "twenty-mcp");
 }
 
+export interface FileTokenStoreOptions {
+  /** Break locks whose mtime is older than this (holder crashed). Default 10s. */
+  lockStaleMs?: number;
+  /** Give up waiting for the lock after this long. Default 5s. */
+  lockTimeoutMs?: number;
+  /** Sleep between acquire attempts. Default 25ms. */
+  lockRetryMs?: number;
+  sleep?: (ms: number) => Promise<void>;
+}
+
 export class FileTokenStore implements TokenStore {
   private readonly keyPath: string;
   private readonly dataPath: string;
+  private readonly lockPath: string;
+  private readonly lockStaleMs: number;
+  private readonly lockTimeoutMs: number;
+  private readonly lockRetryMs: number;
+  private readonly sleep: (ms: number) => Promise<void>;
 
-  constructor(private readonly dir: string) {
+  constructor(
+    private readonly dir: string,
+    opts: FileTokenStoreOptions = {},
+  ) {
     this.keyPath = join(dir, "store.key");
     this.dataPath = join(dir, "tokens.json");
+    this.lockPath = join(dir, "tokens.json.lock");
+    this.lockStaleMs = opts.lockStaleMs ?? 10_000;
+    this.lockTimeoutMs = opts.lockTimeoutMs ?? 5_000;
+    this.lockRetryMs = opts.lockRetryMs ?? 25;
+    this.sleep = opts.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
   }
 
   async get(label: string): Promise<TokenRecord | null> {
@@ -47,19 +78,74 @@ export class FileTokenStore implements TokenStore {
   }
 
   async set(label: string, rec: TokenRecord): Promise<void> {
-    const all = this.readAll();
-    all[label] = this.encrypt(JSON.stringify(rec));
-    this.writeAll(all);
+    await this.withLock(() => {
+      const all = this.readAll();
+      all[label] = this.encrypt(JSON.stringify(rec));
+      this.writeAll(all);
+    });
   }
 
   async delete(label: string): Promise<void> {
-    const all = this.readAll();
-    delete all[label];
-    this.writeAll(all);
+    await this.withLock(() => {
+      const all = this.readAll();
+      delete all[label];
+      this.writeAll(all);
+    });
   }
 
   async labels(): Promise<string[]> {
     return Object.keys(this.readAll());
+  }
+
+  private async acquireLock(): Promise<void> {
+    mkdirSync(this.dir, { recursive: true });
+    const deadline = Date.now() + this.lockTimeoutMs;
+    for (;;) {
+      try {
+        writeFileSync(this.lockPath, String(process.pid), { flag: "wx", mode: 0o600 });
+        return;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
+      }
+      let mtimeMs: number;
+      try {
+        mtimeMs = statSync(this.lockPath).mtimeMs;
+      } catch {
+        continue; // lock vanished between attempts — retry immediately
+      }
+      if (Date.now() - mtimeMs > this.lockStaleMs) {
+        try {
+          unlinkSync(this.lockPath); // holder crashed — break the stale lock
+        } catch {
+          /* another process broke it first */
+        }
+        continue;
+      }
+      if (Date.now() >= deadline) {
+        throw new Error(
+          `twenty-mcp: timed out waiting for the token-store lock at ${this.lockPath}. ` +
+            `If no other twenty-mcp process is running, delete the lock file and retry.`,
+        );
+      }
+      await this.sleep(this.lockRetryMs);
+    }
+  }
+
+  private releaseLock(): void {
+    try {
+      unlinkSync(this.lockPath);
+    } catch {
+      /* already gone */
+    }
+  }
+
+  private async withLock<T>(fn: () => T): Promise<T> {
+    await this.acquireLock();
+    try {
+      return fn();
+    } finally {
+      this.releaseLock();
+    }
   }
 
   private key(): Buffer {
