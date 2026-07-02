@@ -1,5 +1,5 @@
 export type { Connection, CredentialProvider } from "./auth/types.js";
-export { ApiKeyProvider } from "./auth/apiKeyProvider.js";
+export { ApiKeyProvider, StoredApiKeyProvider } from "./auth/apiKeyProvider.js";
 export { OAuthProvider } from "./auth/oauthProvider.js";
 export { generateCodeVerifier, codeChallengeS256 } from "./auth/pkce.js";
 export { FileTokenStore, defaultConfigDir } from "./auth/tokenStore.js";

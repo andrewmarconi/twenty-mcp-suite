@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, mkdirSync, writeFileSync, chmodSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { ApiKeyProvider } from "./apiKeyProvider.js";
+import { ApiKeyProvider, StoredApiKeyProvider } from "./apiKeyProvider.js";
 import { OAuthProvider } from "./oauthProvider.js";
 import { FileTokenStore, defaultConfigDir, type TokenStore } from "./tokenStore.js";
 import type { Connection } from "./types.js";
@@ -95,12 +95,9 @@ export function buildConnectionFromConfig(
   }
   const perLabel = envKeyForLabel(label);
   const apiKey = env[perLabel]?.trim() || env.TWENTY_API_KEY?.trim();
-  if (!apiKey) {
-    throw new Error(
-      `No API key for connection "${label}". Set ${perLabel} (or TWENTY_API_KEY) in the environment.`,
-    );
-  }
-  const apiProvider = new ApiKeyProvider(apiKey);
+  const apiProvider = apiKey
+    ? new ApiKeyProvider(apiKey)
+    : new StoredApiKeyProvider(label, store ?? new FileTokenStore(defaultConfigDir(env)), perLabel);
   return {
     label,
     baseUrl: stripTrailingSlash(cfg.baseUrl),

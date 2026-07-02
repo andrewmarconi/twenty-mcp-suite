@@ -66,10 +66,34 @@ describe("buildConnectionFromConfig", () => {
     expect(await conn.getBearer()).toBe("shared-key");
   });
 
-  it("throws an actionable error when an apikey connection has no key", () => {
-    expect(() =>
-      buildConnectionFromConfig("acme-prod", registry.connections["acme-prod"], {}),
-    ).toThrow(/TWENTY_API_KEY_ACME_PROD/);
+  it("falls back to a stored API key when no env key is set", async () => {
+    const conn = buildConnectionFromConfig(
+      "acme-prod",
+      registry.connections["acme-prod"],
+      {},
+      memStore({ kind: "apikey", apiKey: "stored-key" }),
+    );
+    expect(await conn.getBearer()).toBe("stored-key");
+  });
+
+  it("prefers env keys over a stored key", async () => {
+    const conn = buildConnectionFromConfig(
+      "acme-prod",
+      registry.connections["acme-prod"],
+      { TWENTY_API_KEY_ACME_PROD: "env-key" },
+      memStore({ kind: "apikey", apiKey: "stored-key" }),
+    );
+    expect(await conn.getBearer()).toBe("env-key");
+  });
+
+  it("rejects lazily with an actionable error when no key exists anywhere", async () => {
+    const conn = buildConnectionFromConfig(
+      "acme-prod",
+      registry.connections["acme-prod"],
+      {},
+      memStore(null),
+    );
+    await expect(conn.getBearer()).rejects.toThrow(/TWENTY_API_KEY_ACME_PROD/);
   });
 });
 
