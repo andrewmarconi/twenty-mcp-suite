@@ -15,6 +15,7 @@ function deps(over: Record<string, unknown> = {}) {
       connections: { "acme-oauth": { baseUrl: "https://crm.acme.com", auth: "oauth" } },
     }),
     login: vi.fn().mockResolvedValue(undefined),
+    promptApiKey: vi.fn().mockResolvedValue(null),
     runSetup: vi.fn().mockResolvedValue(0),
     runSetupNonInteractive: vi.fn().mockResolvedValue(0),
     out: vi.fn(),
@@ -22,6 +23,33 @@ function deps(over: Record<string, unknown> = {}) {
     ...over,
   };
 }
+
+describe("runCli — login for apikey connections", () => {
+  const apikeyRegistry = {
+    connections: { sandbox: { baseUrl: "https://dev.acme.com", auth: "apikey" } },
+  };
+
+  it("prompts for the key and stores it encrypted", async () => {
+    const d = deps({
+      loadRegistry: vi.fn().mockReturnValue(apikeyRegistry),
+      promptApiKey: vi.fn().mockResolvedValue("sk-123"),
+    });
+    const code = await runCli(["login", "sandbox"], d as never);
+    expect(code).toBe(0);
+    expect(d.store.set).toHaveBeenCalledWith("sandbox", { kind: "apikey", apiKey: "sk-123" });
+    expect(d.login).not.toHaveBeenCalled();
+  });
+
+  it("returns 1 and stores nothing when the prompt is cancelled", async () => {
+    const d = deps({
+      loadRegistry: vi.fn().mockReturnValue(apikeyRegistry),
+      promptApiKey: vi.fn().mockResolvedValue(null),
+    });
+    const code = await runCli(["login", "sandbox"], d as never);
+    expect(code).toBe(1);
+    expect(d.store.set).not.toHaveBeenCalled();
+  });
+});
 
 describe("runCli", () => {
   it("login <label> resolves the baseUrl from the registry and runs the flow", async () => {

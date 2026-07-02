@@ -17,6 +17,10 @@ export interface PromptAPI {
     initialValue?: T;
   }): Promise<T | symbol>;
   confirm(opts: { message: string }): Promise<boolean | symbol>;
+  password(opts: {
+    message: string;
+    validate?: (v: string) => string | undefined;
+  }): Promise<string | symbol>;
   isCancel(value: unknown): value is symbol;
 }
 
@@ -40,6 +44,11 @@ export function clackPrompts(): PromptAPI {
         options: opts.options as Option<T>[],
       }),
     confirm: (opts) => clack.confirm(opts),
+    password: (opts) =>
+      clack.password({
+        ...opts,
+        validate: opts.validate ? (v) => opts.validate!(v ?? "") : undefined,
+      }),
     isCancel: (value): value is symbol => clack.isCancel(value),
   };
 }

@@ -25,6 +25,8 @@ export interface CliDeps {
   store: TokenStore;
   loadRegistry: () => RegistryFile | null;
   login: typeof loginConnection;
+  /** Masked prompt for an API key; resolves null on cancel/empty. */
+  promptApiKey: (label: string) => Promise<string | null>;
   runSetup: () => Promise<number>;
   runSetupNonInteractive: (cmd: SetupCommand) => Promise<number>;
   out: (msg: string) => void;
@@ -37,6 +39,12 @@ export function realDeps(env: NodeJS.ProcessEnv): CliDeps {
     store: new FileTokenStore(dir),
     loadRegistry: () => loadRegistryFile(connectionsPath(env)),
     login: loginConnection,
+    promptApiKey: async (label) => {
+      const p = clackPrompts();
+      const v = await p.password({ message: `API key for "${label}":` });
+      if (p.isCancel(v) || !(v as string).trim()) return null;
+      return (v as string).trim();
+    },
     runSetup: () => runSetup(realSetupDeps(env)),
     runSetupNonInteractive: (cmd) => runSetupNonInteractive(cmd, realSetupDeps(env)),
     out: (m) => console.log(m),
@@ -92,6 +100,16 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
     if (!cfg) {
       deps.err(`Unknown connection "${label}". Add it to your connections registry first.`);
       return 1;
+    }
+    if (cfg.auth === "apikey") {
+      const key = await deps.promptApiKey(label);
+      if (key === null) {
+        deps.err("Cancelled — no API key stored.");
+        return 1;
+      }
+      await deps.store.set(label, { kind: "apikey", apiKey: key });
+      deps.out(`Stored API key for "${label}" (encrypted).`);
+      return 0;
     }
     await deps.login({ label, baseUrl: cfg.baseUrl, store: deps.store });
     return 0;
