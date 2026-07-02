@@ -6,7 +6,15 @@ import type { ToolDef } from "./schemaTools.js";
 import { withDriftHandling } from "./helpers.js";
 
 export const AGG_OPS = [
-  "count", "sum", "avg", "min", "max", "earliest", "latest", "countTrue", "countFalse",
+  "count",
+  "sum",
+  "avg",
+  "min",
+  "max",
+  "earliest",
+  "latest",
+  "countTrue",
+  "countFalse",
 ] as const;
 export type AggOp = (typeof AGG_OPS)[number];
 

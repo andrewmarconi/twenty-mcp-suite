@@ -8,7 +8,7 @@ import {
   discoverOAuth,
   DEFAULT_TOKEN_TTL_SECONDS,
 } from "./oauthClient.js";
-import { startLoopback, openBrowser } from "./loopback.js";
+import { startLoopback, openBrowser, type LoopbackServer } from "./loopback.js";
 
 export interface LoginDeps {
   discover: typeof discoverOAuth;
@@ -45,18 +45,22 @@ export async function loginConnection(
 ): Promise<void> {
   const port = args.port ?? DEFAULT_PORT;
   const existing = await args.store.get(args.label);
-  let server;
+  let server: LoopbackServer;
   try {
     server = await deps.startLoopback(port);
   } catch (e) {
     if ((e as { code?: string })?.code === "EADDRINUSE") {
-      throw new Error(`Local port ${port} is already in use — another sign-in may be running. Try again in a moment.`);
+      throw new Error(
+        `Local port ${port} is already in use — another sign-in may be running. Try again in a moment.`,
+      );
     }
     throw e;
   }
   try {
     const meta = await deps.discover(args.baseUrl);
-    const authMethod = meta.tokenEndpointAuthMethods.includes("none") ? "none" : "client_secret_post";
+    const authMethod = meta.tokenEndpointAuthMethods.includes("none")
+      ? "none"
+      : "client_secret_post";
 
     let clientId = existing?.clientId;
     let clientSecret = existing?.clientSecret;

@@ -17,11 +17,7 @@ export interface ServerMeta {
   version: string;
 }
 
-export function buildTools(
-  rest: RestClient,
-  gql: GraphQLClient,
-  cache: SchemaCache,
-): ToolDef[] {
+export function buildTools(rest: RestClient, gql: GraphQLClient, cache: SchemaCache): ToolDef[] {
   const tools = [
     ...schemaTools(cache),
     ...readTools(rest, cache),

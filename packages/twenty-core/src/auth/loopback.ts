@@ -71,10 +71,13 @@ export function startLoopback(port: number): Promise<LoopbackServer> {
 }
 
 export function openBrowser(url: string): void {
-  const cmd =
-    platform() === "darwin" ? "open" : platform() === "win32" ? "start" : "xdg-open";
+  const cmd = platform() === "darwin" ? "open" : platform() === "win32" ? "start" : "xdg-open";
   try {
-    const child = spawn(cmd, [url], { stdio: "ignore", detached: true, shell: platform() === "win32" });
+    const child = spawn(cmd, [url], {
+      stdio: "ignore",
+      detached: true,
+      shell: platform() === "win32",
+    });
     child.on("error", () => {});
     child.unref();
   } catch {

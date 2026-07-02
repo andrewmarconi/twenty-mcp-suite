@@ -48,7 +48,10 @@ describe("loginConnection", () => {
   it("discovers endpoints, registers a public client, runs the flow, and persists the record", async () => {
     const store = memStore();
     const d = deps();
-    await loginConnection({ label: "acme", baseUrl: "https://crm.example.com", store, port: 52333 }, d as never);
+    await loginConnection(
+      { label: "acme", baseUrl: "https://crm.example.com", store, port: 52333 },
+      d as never,
+    );
 
     expect(d.discover).toHaveBeenCalledWith("https://crm.example.com");
     expect(d.register).toHaveBeenCalledWith(
@@ -84,7 +87,10 @@ describe("loginConnection", () => {
       discover: vi.fn().mockResolvedValue(confidentialMeta),
       register: vi.fn().mockResolvedValue({ clientId: "cid", clientSecret: "csec" }),
     });
-    await loginConnection({ label: "acme", baseUrl: "https://crm.example.com", store, port: 52333 }, d as never);
+    await loginConnection(
+      { label: "acme", baseUrl: "https://crm.example.com", store, port: 52333 },
+      d as never,
+    );
     expect(d.register).toHaveBeenCalledWith(
       confidentialMeta.registrationEndpoint,
       "http://localhost:52333/callback",
@@ -119,17 +125,25 @@ describe("loginConnection", () => {
       exchange: vi.fn().mockRejectedValue(new Error("boom")),
     });
     await expect(
-      loginConnection({ label: "acme", baseUrl: "https://x", store: memStore(), port: 52333 }, d as never),
+      loginConnection(
+        { label: "acme", baseUrl: "https://x", store: memStore(), port: 52333 },
+        d as never,
+      ),
     ).rejects.toThrow("boom");
     expect(close).toHaveBeenCalled();
   });
 
   it("surfaces a friendly message when the loopback port is already in use", async () => {
     const d = deps({
-      startLoopback: vi.fn().mockRejectedValue(Object.assign(new Error("x"), { code: "EADDRINUSE" })),
+      startLoopback: vi
+        .fn()
+        .mockRejectedValue(Object.assign(new Error("x"), { code: "EADDRINUSE" })),
     });
     await expect(
-      loginConnection({ label: "acme", baseUrl: "https://x", store: memStore(), port: 52333 }, d as never),
+      loginConnection(
+        { label: "acme", baseUrl: "https://x", store: memStore(), port: 52333 },
+        d as never,
+      ),
     ).rejects.toThrow(/already in use/);
   });
 });

@@ -6,14 +6,24 @@ import type { ToolDef } from "../tools/schemaTools.js";
 import type { ObjectSchema } from "../schema/types.js";
 
 const people: ObjectSchema = {
-  nameSingular: "person", namePlural: "people",
-  labelSingular: "Person", labelPlural: "People",
-  isActive: true, isSystem: false, isSearchable: true, fields: [],
+  nameSingular: "person",
+  namePlural: "people",
+  labelSingular: "Person",
+  labelPlural: "People",
+  isActive: true,
+  isSystem: false,
+  isSearchable: true,
+  fields: [],
 };
 const workflows: ObjectSchema = {
-  nameSingular: "workflow", namePlural: "workflows",
-  labelSingular: "Workflow", labelPlural: "Workflows",
-  isActive: true, isSystem: true, isSearchable: false, fields: [],
+  nameSingular: "workflow",
+  namePlural: "workflows",
+  labelSingular: "Workflow",
+  labelPlural: "Workflows",
+  isActive: true,
+  isSystem: true,
+  isSearchable: false,
+  fields: [],
 };
 
 // Fake cache: resolve() maps singular/plural to the object; throws for unknown.
@@ -22,9 +32,7 @@ function fakeCache() {
   return {
     ensureLoaded: vi.fn().mockResolvedValue(undefined),
     resolve: (name: string) => {
-      const o = all.find(
-        (x) => x.namePlural === name || x.nameSingular === name,
-      );
+      const o = all.find((x) => x.namePlural === name || x.nameSingular === name);
       if (!o) throw new Error(`Unknown object "${name}".`);
       return o;
     },
@@ -64,7 +72,12 @@ const profile: CapabilityProfile = {
   objectScope: ["people"],
   tools: [
     { from: "list_object_types" },
-    { from: "query_records", as: "find_contacts", bind: { object: "people" }, description: "Find people." },
+    {
+      from: "query_records",
+      as: "find_contacts",
+      bind: { object: "people" },
+      description: "Find people.",
+    },
     { from: "query_records" },
     { from: "search" },
   ],
@@ -84,7 +97,9 @@ describe("buildProfileTools", () => {
   it("refuses an out-of-scope object on a generic tool", async () => {
     const tools = buildProfileTools(profile, primitives(), fakeCache());
     const query = tools.find((t) => t.name === "query_records")!;
-    await expect(query.handler({ object: "workflows" })).rejects.toThrow(/not available in the "crm" profile/);
+    await expect(query.handler({ object: "workflows" })).rejects.toThrow(
+      /not available in the "crm" profile/,
+    );
     // in-scope object passes:
     const ok = JSON.parse(await query.handler({ object: "people" }));
     expect(ok.tool).toBe("query");
@@ -114,6 +129,8 @@ describe("buildProfileTools", () => {
       name: "x",
       tools: [{ from: "search" }, { from: "query_records", as: "search" }],
     };
-    expect(() => buildProfileTools(bad, primitives(), fakeCache())).toThrow(/duplicate tool name "search"/);
+    expect(() => buildProfileTools(bad, primitives(), fakeCache())).toThrow(
+      /duplicate tool name "search"/,
+    );
   });
 });

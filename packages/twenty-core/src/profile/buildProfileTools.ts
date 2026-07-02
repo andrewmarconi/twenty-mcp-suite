@@ -10,8 +10,7 @@ function normalizeScope(scope?: string[]): Set<string> | null {
 
 function inScope(scopeSet: Set<string>, schema: ObjectSchema): boolean {
   return (
-    scopeSet.has(schema.namePlural.toLowerCase()) ||
-    scopeSet.has(schema.nameSingular.toLowerCase())
+    scopeSet.has(schema.namePlural.toLowerCase()) || scopeSet.has(schema.nameSingular.toLowerCase())
   );
 }
 
@@ -76,9 +75,7 @@ function makeHandler(
         await cache.ensureLoaded();
         const schema = cache.resolve(object); // throws on a truly-unknown object
         if (!inScope(scopeSet, schema)) {
-          throw new Error(
-            `Object "${object}" is not available in the "${profileName}" profile.`,
-          );
+          throw new Error(`Object "${object}" is not available in the "${profileName}" profile.`);
         }
       }
       if (spec.from === "list_object_types") {
@@ -93,8 +90,7 @@ function filterListToScope(text: string, scopeSet: Set<string>): string {
   const list = JSON.parse(text) as Array<{ nameSingular: string; namePlural: string }>;
   return JSON.stringify(
     list.filter(
-      (o) =>
-        scopeSet.has(o.namePlural.toLowerCase()) || scopeSet.has(o.nameSingular.toLowerCase()),
+      (o) => scopeSet.has(o.namePlural.toLowerCase()) || scopeSet.has(o.nameSingular.toLowerCase()),
     ),
   );
 }

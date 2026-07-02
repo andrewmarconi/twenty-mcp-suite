@@ -10,8 +10,22 @@
         "isSystem": false,
         "isSearchable": true,
         "fields": [
-          { "name": "name", "type": "TEXT", "isNullable": false, "isUnique": false, "isActive": true, "isSystem": false },
-          { "name": "deletedField", "type": "TEXT", "isNullable": true, "isUnique": false, "isActive": false, "isSystem": false }
+          {
+            "name": "name",
+            "type": "TEXT",
+            "isNullable": false,
+            "isUnique": false,
+            "isActive": true,
+            "isSystem": false
+          },
+          {
+            "name": "deletedField",
+            "type": "TEXT",
+            "isNullable": true,
+            "isUnique": false,
+            "isActive": false,
+            "isSystem": false
+          }
         ]
       }
     ],
@@ -28,7 +42,14 @@
         "isSystem": false,
         "isSearchable": true,
         "fields": [
-          { "name": "emails", "type": "EMAILS", "isNullable": true, "isUnique": false, "isActive": true, "isSystem": false }
+          {
+            "name": "emails",
+            "type": "EMAILS",
+            "isNullable": true,
+            "isUnique": false,
+            "isActive": true,
+            "isSystem": false
+          }
         ]
       },
       {

@@ -60,8 +60,6 @@ export default defineConfig({
         },
       ],
     },
-    socialLinks: [
-      { icon: "github", link: "https://github.com/andrewmarconi/twenty-mcp-suite" },
-    ],
+    socialLinks: [{ icon: "github", link: "https://github.com/andrewmarconi/twenty-mcp-suite" }],
   },
 });

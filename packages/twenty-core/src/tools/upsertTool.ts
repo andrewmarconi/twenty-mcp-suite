@@ -5,7 +5,7 @@ import type { ToolDef } from "./schemaTools.js";
 import { withDriftHandling } from "./helpers.js";
 
 export function upsertMutationName(namePlural: string): string {
-  return "create" + namePlural.charAt(0).toUpperCase() + namePlural.slice(1);
+  return `create${namePlural.charAt(0).toUpperCase()}${namePlural.slice(1)}`;
 }
 
 const shape = z.object({

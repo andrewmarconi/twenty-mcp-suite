@@ -5,14 +5,46 @@ import { SchemaCache } from "../schema/cache.js";
 import { TwentyApiError } from "../twenty/errors.js";
 
 const opportunities: ObjectSchema = {
-  nameSingular: "opportunity", namePlural: "opportunities",
-  labelSingular: "Opportunity", labelPlural: "Opportunities",
-  isActive: true, isSystem: false, isSearchable: true,
+  nameSingular: "opportunity",
+  namePlural: "opportunities",
+  labelSingular: "Opportunity",
+  labelPlural: "Opportunities",
+  isActive: true,
+  isSystem: false,
+  isSearchable: true,
   fields: [
-    { name: "amount", type: "NUMBER", isNullable: true, isUnique: false, isActive: true, isSystem: false },
-    { name: "stage", type: "SELECT", isNullable: true, isUnique: false, isActive: true, isSystem: false },
-    { name: "closeDate", type: "DATE_TIME", isNullable: true, isUnique: false, isActive: true, isSystem: false },
-    { name: "won", type: "BOOLEAN", isNullable: true, isUnique: false, isActive: true, isSystem: false },
+    {
+      name: "amount",
+      type: "NUMBER",
+      isNullable: true,
+      isUnique: false,
+      isActive: true,
+      isSystem: false,
+    },
+    {
+      name: "stage",
+      type: "SELECT",
+      isNullable: true,
+      isUnique: false,
+      isActive: true,
+      isSystem: false,
+    },
+    {
+      name: "closeDate",
+      type: "DATE_TIME",
+      isNullable: true,
+      isUnique: false,
+      isActive: true,
+      isSystem: false,
+    },
+    {
+      name: "won",
+      type: "BOOLEAN",
+      isNullable: true,
+      isUnique: false,
+      isActive: true,
+      isSystem: false,
+    },
   ],
 };
 
@@ -47,7 +79,10 @@ describe("buildAggregateQuery", () => {
 
   it("maps earliest/latest onto min/max selectors", () => {
     const { query } = buildAggregateQuery(opportunities, {
-      aggregations: [{ op: "earliest", field: "closeDate" }, { op: "latest", field: "closeDate" }],
+      aggregations: [
+        { op: "earliest", field: "closeDate" },
+        { op: "latest", field: "closeDate" },
+      ],
     });
     expect(query).toContain("closeDate_earliest: closeDate { min }");
     expect(query).toContain("closeDate_latest: closeDate { max }");
@@ -89,7 +124,9 @@ describe("aggregate tool", () => {
     const data = { opportunities: { count: 3 } };
     const gql = { request: vi.fn().mockResolvedValue(data) };
     const tool = aggregateTool(gql as never, cache());
-    const out = JSON.parse(await tool.handler({ object: "opportunities", aggregations: [{ op: "count" }] }));
+    const out = JSON.parse(
+      await tool.handler({ object: "opportunities", aggregations: [{ op: "count" }] }),
+    );
     expect(gql.request).toHaveBeenCalledTimes(1);
     expect(out).toEqual(data);
   });
@@ -105,9 +142,9 @@ describe("aggregate tool", () => {
   it("throws on an unknown object and makes no GraphQL call", async () => {
     const gql = { request: vi.fn() };
     const tool = aggregateTool(gql as never, cache());
-    await expect(
-      tool.handler({ object: "nope", aggregations: [{ op: "count" }] }),
-    ).rejects.toThrow(/nope/);
+    await expect(tool.handler({ object: "nope", aggregations: [{ op: "count" }] })).rejects.toThrow(
+      /nope/,
+    );
     expect(gql.request).not.toHaveBeenCalled();
   });
 
@@ -143,7 +180,12 @@ describe("aggregate tool", () => {
       request: vi
         .fn()
         .mockRejectedValue(
-          new TwentyApiError("boom", 404, { messages: ["cannot find object opportunities"] }, "https://x/graphql"),
+          new TwentyApiError(
+            "boom",
+            404,
+            { messages: ["cannot find object opportunities"] },
+            "https://x/graphql",
+          ),
         ),
     };
     const tool = aggregateTool(gql as never, cache());

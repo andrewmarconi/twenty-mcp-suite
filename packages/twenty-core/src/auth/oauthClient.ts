@@ -37,7 +37,12 @@ export async function discoverOAuth(
   const text = await res.text();
   const parsed = text ? safeJson(text) : {};
   if (!res.ok) {
-    throw new TwentyApiError(`Twenty OAuth discovery failed (${res.status})`, res.status, parsed, url);
+    throw new TwentyApiError(
+      `Twenty OAuth discovery failed (${res.status})`,
+      res.status,
+      parsed,
+      url,
+    );
   }
   const b = asObject(parsed);
   const authorizationEndpoint = b.authorization_endpoint as string | undefined;
@@ -132,12 +137,22 @@ async function postToken(
   const text = await res.text();
   const parsed = text ? safeJson(text) : {};
   if (!res.ok) {
-    throw new TwentyApiError(`Twenty OAuth token request failed (${res.status})`, res.status, parsed, tokenEndpoint);
+    throw new TwentyApiError(
+      `Twenty OAuth token request failed (${res.status})`,
+      res.status,
+      parsed,
+      tokenEndpoint,
+    );
   }
   const b = asObject(parsed);
   const accessToken = b.access_token as string | undefined;
   if (!accessToken) {
-    throw new TwentyApiError("Twenty OAuth token response had no access_token", res.status, parsed, tokenEndpoint);
+    throw new TwentyApiError(
+      "Twenty OAuth token response had no access_token",
+      res.status,
+      parsed,
+      tokenEndpoint,
+    );
   }
   return {
     accessToken,

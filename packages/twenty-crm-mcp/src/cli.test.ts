@@ -91,14 +91,22 @@ describe("runCli", () => {
     );
     expect(code).toBe(0);
     expect(d.runSetupNonInteractive).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: "add", label: "acme", url: "https://crm.acme.com", auth: "apikey" }),
+      expect.objectContaining({
+        kind: "add",
+        label: "acme",
+        url: "https://crm.acme.com",
+        auth: "apikey",
+      }),
     );
     expect(d.runSetup).not.toHaveBeenCalled();
   });
 
   it("setup with a bad flag returns 1 and reports the error", async () => {
     const d = deps();
-    const code = await runCli(["setup", "--add", "acme", "--url", "not-a-url", "--auth", "apikey"], d as never);
+    const code = await runCli(
+      ["setup", "--add", "acme", "--url", "not-a-url", "--auth", "apikey"],
+      d as never,
+    );
     expect(code).toBe(1);
     expect(d.err).toHaveBeenCalledWith(expect.stringMatching(/url/i));
     expect(d.runSetup).not.toHaveBeenCalled();

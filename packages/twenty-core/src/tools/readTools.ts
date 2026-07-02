@@ -64,7 +64,10 @@ export function readTools(rest: RestClient, cache: SchemaCache): ToolDef[] {
     {
       name: "search",
       description: "Full-text search across searchable objects in Twenty.",
-      inputSchema: z.object({ query: z.string(), limit: z.number().int().positive().max(60).optional() }),
+      inputSchema: z.object({
+        query: z.string(),
+        limit: z.number().int().positive().max(60).optional(),
+      }),
       handler: async (args) => {
         const a = z
           .object({ query: z.string(), limit: z.number().int().positive().max(60).optional() })

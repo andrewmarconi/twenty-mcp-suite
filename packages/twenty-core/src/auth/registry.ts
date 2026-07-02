@@ -24,7 +24,7 @@ function stripTrailingSlash(url: string): string {
 }
 
 export function envKeyForLabel(label: string): string {
-  return "TWENTY_API_KEY_" + label.toUpperCase().replace(/-/g, "_");
+  return `TWENTY_API_KEY_${label.toUpperCase().replace(/-/g, "_")}`;
 }
 
 export function legacyConnectionFromEnv(env: NodeJS.ProcessEnv): Connection | null {
@@ -113,8 +113,7 @@ export function resolveActiveConnection(
   env: NodeJS.ProcessEnv,
   opts?: { registry?: RegistryFile; store?: TokenStore; configPath?: string },
 ): Connection {
-  const registry =
-    opts?.registry ?? loadRegistryFile(opts?.configPath ?? connectionsPath(env));
+  const registry = opts?.registry ?? loadRegistryFile(opts?.configPath ?? connectionsPath(env));
 
   if (registry) {
     const label = env.TWENTY_CONNECTION?.trim() || registry.defaultConnection;

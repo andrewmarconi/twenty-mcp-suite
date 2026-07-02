@@ -39,9 +39,7 @@ export class SchemaCache {
     const objects = this.requireLoaded();
     const key = objectName.toLowerCase();
     const match = objects.find(
-      (o) =>
-        o.namePlural.toLowerCase() === key ||
-        o.nameSingular.toLowerCase() === key,
+      (o) => o.namePlural.toLowerCase() === key || o.nameSingular.toLowerCase() === key,
     );
     if (!match) {
       throw new Error(`Unknown object "${objectName}".${driftHint(objectName)}`);

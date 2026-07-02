@@ -5,9 +5,14 @@ import { TwentyApiError } from "../twenty/errors.js";
 import type { ObjectSchema } from "../schema/types.js";
 
 const people: ObjectSchema = {
-  nameSingular: "person", namePlural: "people",
-  labelSingular: "Person", labelPlural: "People",
-  isActive: true, isSystem: false, isSearchable: true, fields: [],
+  nameSingular: "person",
+  namePlural: "people",
+  labelSingular: "Person",
+  labelPlural: "People",
+  isActive: true,
+  isSystem: false,
+  isSearchable: true,
+  fields: [],
 };
 function cache() {
   return new SchemaCache({} as any, vi.fn().mockResolvedValue([people]));
@@ -20,10 +25,16 @@ describe("readTools", () => {
   it("query_records builds GET on the plural path with query params", async () => {
     const rest = { get: vi.fn().mockResolvedValue({ data: { people: [] } }) };
     await tool("query_records", rest).handler({
-      object: "people", filter: "name[eq]:Ada", limit: 5,
+      object: "people",
+      filter: "name[eq]:Ada",
+      limit: 5,
     });
     expect(rest.get).toHaveBeenCalledWith("/rest/people", {
-      filter: "name[eq]:Ada", orderBy: undefined, limit: 5, depth: undefined, starting_after: undefined,
+      filter: "name[eq]:Ada",
+      orderBy: undefined,
+      limit: 5,
+      depth: undefined,
+      starting_after: undefined,
     });
   });
 
@@ -47,8 +58,8 @@ describe("readTools", () => {
           new TwentyApiError("x", 404, { messages: ["cannot find object people"] }, "/rest/people"),
         ),
     };
-    await expect(
-      tool("query_records", rest).handler({ object: "people" }),
-    ).rejects.toThrow(/refresh_schema/);
+    await expect(tool("query_records", rest).handler({ object: "people" })).rejects.toThrow(
+      /refresh_schema/,
+    );
   });
 });
