@@ -14,6 +14,7 @@ function fakePrompts(answers: unknown[]) {
       text: async () => next(),
       select: async () => next(),
       confirm: async () => next(),
+      password: async () => next(),
       isCancel: (v: unknown) => v === CANCEL,
     },
     CANCEL,
@@ -72,7 +73,7 @@ describe("runSetup — add flow", () => {
   });
 
   it("adds an apikey site without calling login", async () => {
-    const { saved, d } = deps(["add", "sandbox", "https://dev.acme.com", "apikey", "done"]);
+    const { saved, d } = deps(["add", "sandbox", "https://dev.acme.com", "apikey", "env", "done"]);
     const code = await runSetup(d as never);
     expect(code).toBe(0);
     expect(saved.at(-1)!.connections.sandbox).toEqual({
@@ -240,10 +241,11 @@ describe("runSetup — install skill", () => {
 
 describe("runSetup — proactive skill offer after first add", () => {
   it("offers and installs the skill after adding a connection when none is installed", async () => {
-    // menu:add, label, baseUrl, auth:apikey, offer-confirm:true, scope:project, menu:done
-    const { d } = deps(["add", "acme", "https://crm.acme.com", "apikey", true, "project", "done"], {
-      skill: skillDep({ exists: () => false }),
-    });
+    // menu:add, label, baseUrl, auth:apikey, key:env, offer-confirm:true, scope:project, menu:done
+    const { d } = deps(
+      ["add", "acme", "https://crm.acme.com", "apikey", "env", true, "project", "done"],
+      { skill: skillDep({ exists: () => false }) },
+    );
     const code = await runSetup(d as never);
     expect(code).toBe(0);
     expect(d.skill.install).toHaveBeenCalledWith(
@@ -254,19 +256,80 @@ describe("runSetup — proactive skill offer after first add", () => {
 
   it("does not offer when a skill is already installed", async () => {
     // default skillDep().exists === true -> no offer prompt is consumed
-    const { saved, d } = deps(["add", "acme", "https://crm.acme.com", "apikey", "done"]);
+    const { saved, d } = deps(["add", "acme", "https://crm.acme.com", "apikey", "env", "done"]);
     await runSetup(d as never);
     expect(saved.at(-1)!.connections.acme).toBeDefined();
     expect(d.skill.install).not.toHaveBeenCalled();
   });
 
   it("records the connection even when the offer is declined", async () => {
-    // menu:add, label, baseUrl, auth:apikey, offer-confirm:false, menu:done
-    const { saved, d } = deps(["add", "acme", "https://crm.acme.com", "apikey", false, "done"], {
-      skill: skillDep({ exists: () => false }),
-    });
+    // menu:add, label, baseUrl, auth:apikey, key:env, offer-confirm:false, menu:done
+    const { saved, d } = deps(
+      ["add", "acme", "https://crm.acme.com", "apikey", "env", false, "done"],
+      { skill: skillDep({ exists: () => false }) },
+    );
     await runSetup(d as never);
     expect(saved.at(-1)!.connections.acme).toBeDefined();
     expect(d.skill.install).not.toHaveBeenCalled();
+  });
+});
+
+describe("runSetup — API key storage", () => {
+  it("stores the API key encrypted when the user chooses 'store'", async () => {
+    const { d } = deps([
+      "add",
+      "sandbox",
+      "https://dev.acme.com",
+      "apikey",
+      "store",
+      "sk-123",
+      "done",
+    ]);
+    const code = await runSetup(d as never);
+    expect(code).toBe(0);
+    expect(d.store.set).toHaveBeenCalledWith("sandbox", { kind: "apikey", apiKey: "sk-123" });
+  });
+
+  it("keeps the env-var path when the user chooses 'env'", async () => {
+    const { d } = deps(["add", "sandbox", "https://dev.acme.com", "apikey", "env", "done"]);
+    const code = await runSetup(d as never);
+    expect(code).toBe(0);
+    expect(d.store.set).not.toHaveBeenCalled();
+  });
+
+  it("stores nothing when the key prompt is cancelled", async () => {
+    // queue ends after "store": the password prompt (and everything later) cancels
+    const { d } = deps(["add", "sandbox", "https://dev.acme.com", "apikey", "store"]);
+    await runSetup(d as never);
+    expect(d.store.set).not.toHaveBeenCalled();
+  });
+
+  it("does not re-offer storage when a key is already stored for the label", async () => {
+    const { d } = deps(["add", "sandbox", "https://dev.acme.com", "apikey", "done"], {
+      store: {
+        get: vi.fn().mockResolvedValue({ kind: "apikey", apiKey: "old" }),
+        set: vi.fn(),
+        delete: vi.fn().mockResolvedValue(undefined),
+        labels: vi.fn().mockResolvedValue([]),
+      },
+    });
+    const code = await runSetup(d as never);
+    expect(code).toBe(0); // no extra select consumed — "done" lands on the menu
+    expect(d.store.set).not.toHaveBeenCalled();
+  });
+
+  it("edit offers key storage when switching a connection to apikey", async () => {
+    const { d } = deps(
+      // menu:edit, pick:acme, label(keep), url(keep), auth:apikey, store, key, menu:done
+      ["edit", "acme", "acme", "https://crm.acme.com", "apikey", "store", "sk-456", "done"],
+      {
+        loadRegistry: () => ({
+          connections: { acme: { baseUrl: "https://crm.acme.com", auth: "oauth" } },
+        }),
+      },
+    );
+    const code = await runSetup(d as never);
+    expect(code).toBe(0);
+    expect(d.store.set).toHaveBeenCalledWith("acme", { kind: "apikey", apiKey: "sk-456" });
   });
 });

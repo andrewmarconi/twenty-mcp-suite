@@ -280,6 +280,37 @@ function printConnections(deps: SetupDeps, reg: RegistryFile): void {
   }
 }
 
+async function maybeOfferApiKeyStorage(deps: SetupDeps, label: string): Promise<void> {
+  const p = deps.prompts;
+  const existing = await deps.store.get(label);
+  if (existing?.kind === "apikey") return; // a key is already stored for this label
+
+  const choice = await p.select<"store" | "env">({
+    message: "Where should the API key live?",
+    options: [
+      { value: "store", label: "Store it encrypted now (recommended)" },
+      { value: "env", label: "Read it from the environment" },
+    ],
+  });
+  if (!p.isCancel(choice) && choice === "store") {
+    const key = await p.password({
+      message: `API key for "${label}":`,
+      validate: (v) => (v.trim().length > 0 ? undefined : "Enter a non-empty API key."),
+    });
+    if (!p.isCancel(key)) {
+      await deps.store.set(label, { kind: "apikey", apiKey: (key as string).trim() });
+      p.note(`API key stored (encrypted) for "${label}".`, "API key");
+      return;
+    }
+  }
+  p.note(
+    `Set the API key in your environment before starting the server:\n` +
+      `  ${envKeyForLabel(label)}=<your-key>\n` +
+      `(or TWENTY_API_KEY as a fallback)`,
+    "API key",
+  );
+}
+
 async function addSite(deps: SetupDeps, reg: RegistryFile): Promise<RegistryFile> {
   const p = deps.prompts;
 
@@ -325,12 +356,7 @@ async function addSite(deps: SetupDeps, reg: RegistryFile): Promise<RegistryFile
       }
     }
   } else {
-    p.note(
-      `Set the API key in your environment before starting the server:\n` +
-        `  ${envKeyForLabel(label as string)}=<your-key>\n` +
-        `(or TWENTY_API_KEY as a fallback)`,
-      "API key",
-    );
+    await maybeOfferApiKeyStorage(deps, label as string);
   }
 
   if (!deps.skill.exists(deps.skill.projectDest) && !deps.skill.exists(deps.skill.userDest)) {
@@ -406,6 +432,9 @@ async function editSite(deps: SetupDeps, reg: RegistryFile): Promise<RegistryFil
     next = upsertConnection(next, label, cfg);
   }
   deps.saveRegistry(next);
+  if (cfg.auth === "apikey") {
+    await maybeOfferApiKeyStorage(deps, label);
+  }
   return next;
 }
 
