@@ -3,7 +3,7 @@ import {
   removeConnection,
   setDefaultConnection,
   envKeyForLabel,
-  loginConnection,
+  type loginConnection,
   type RegistryFile,
   type ConnectionConfig,
   type TokenStore,
@@ -48,7 +48,16 @@ export type SetupCommand =
 
 const ACTION_FLAGS = ["add", "edit", "remove", "set-default", "install-skill"] as const;
 // action flags that carry a label value; "install-skill" is a boolean action
-const VALUE_FLAGS = new Set(["add", "edit", "remove", "set-default", "url", "auth", "label", "scope"]);
+const VALUE_FLAGS = new Set([
+  "add",
+  "edit",
+  "remove",
+  "set-default",
+  "url",
+  "auth",
+  "label",
+  "scope",
+]);
 const BOOL_FLAGS = new Set(["install-skill", "purge-credentials"]);
 // modifiers each action may accept (label-carrying action flags are not modifiers)
 const ALLOWED_MODIFIERS: Record<(typeof ACTION_FLAGS)[number], Set<string>> = {
@@ -74,7 +83,8 @@ export function parseSetupArgs(args: string[]): SetupCommand | { error: string }
     }
     if (VALUE_FLAGS.has(name)) {
       const val = args[i + 1];
-      if (val === undefined || val.startsWith("--")) return { error: `--${name} requires a value.` };
+      if (val === undefined || val.startsWith("--"))
+        return { error: `--${name} requires a value.` };
       values.set(name, val);
       i++;
       continue;
@@ -90,7 +100,9 @@ export function parseSetupArgs(args: string[]): SetupCommand | { error: string }
     };
   }
   if (actions.length > 1) {
-    return { error: `Only one action allowed per invocation; got ${actions.map((a) => "--" + a).join(", ")}.` };
+    return {
+      error: `Only one action allowed per invocation; got ${actions.map((a) => `--${a}`).join(", ")}.`,
+    };
   }
   const action = actions[0];
 
@@ -100,32 +112,41 @@ export function parseSetupArgs(args: string[]): SetupCommand | { error: string }
     ...["purge-credentials"].filter((m) => bools.has(m)),
   ];
   for (const m of presentMods) {
-    if (!ALLOWED_MODIFIERS[action].has(m)) return { error: `--${m} is not valid with --${action}.` };
+    if (!ALLOWED_MODIFIERS[action].has(m))
+      return { error: `--${m} is not valid with --${action}.` };
   }
 
   if (action === "add") {
     const label = values.get("add")!;
-    if (!LABEL_RE.test(label)) return { error: `Invalid label "${label}". Use lowercase letters, digits, and hyphens.` };
+    if (!LABEL_RE.test(label))
+      return { error: `Invalid label "${label}". Use lowercase letters, digits, and hyphens.` };
     const url = values.get("url");
     const auth = values.get("auth");
     if (!url || !auth) return { error: "--add requires --url and --auth." };
     if (!isHttpUrl(url)) return { error: `Invalid --url "${url}". Enter a valid http(s) URL.` };
-    if (auth !== "oauth" && auth !== "apikey") return { error: `Invalid --auth "${auth}". Use "oauth" or "apikey".` };
+    if (auth !== "oauth" && auth !== "apikey")
+      return { error: `Invalid --auth "${auth}". Use "oauth" or "apikey".` };
     return { kind: "add", label, url, auth };
   }
 
   if (action === "edit") {
     const label = values.get("edit")!;
-    if (!LABEL_RE.test(label)) return { error: `Invalid label "${label}". Use lowercase letters, digits, and hyphens.` };
+    if (!LABEL_RE.test(label))
+      return { error: `Invalid label "${label}". Use lowercase letters, digits, and hyphens.` };
     const url = values.get("url");
     const auth = values.get("auth");
     const newLabel = values.get("label");
     if (url === undefined && auth === undefined && newLabel === undefined) {
       return { error: "--edit requires at least one of --url, --auth, or --label." };
     }
-    if (url !== undefined && !isHttpUrl(url)) return { error: `Invalid --url "${url}". Enter a valid http(s) URL.` };
-    if (auth !== undefined && auth !== "oauth" && auth !== "apikey") return { error: `Invalid --auth "${auth}". Use "oauth" or "apikey".` };
-    if (newLabel !== undefined && !LABEL_RE.test(newLabel)) return { error: `Invalid --label "${newLabel}". Use lowercase letters, digits, and hyphens.` };
+    if (url !== undefined && !isHttpUrl(url))
+      return { error: `Invalid --url "${url}". Enter a valid http(s) URL.` };
+    if (auth !== undefined && auth !== "oauth" && auth !== "apikey")
+      return { error: `Invalid --auth "${auth}". Use "oauth" or "apikey".` };
+    if (newLabel !== undefined && !LABEL_RE.test(newLabel))
+      return {
+        error: `Invalid --label "${newLabel}". Use lowercase letters, digits, and hyphens.`,
+      };
     const cmd: Extract<SetupCommand, { kind: "edit" }> = { kind: "edit", label };
     if (url !== undefined) cmd.url = url;
     if (auth !== undefined) cmd.auth = auth;
@@ -135,20 +156,23 @@ export function parseSetupArgs(args: string[]): SetupCommand | { error: string }
 
   if (action === "remove") {
     const label = values.get("remove")!;
-    if (!LABEL_RE.test(label)) return { error: `Invalid label "${label}". Use lowercase letters, digits, and hyphens.` };
+    if (!LABEL_RE.test(label))
+      return { error: `Invalid label "${label}". Use lowercase letters, digits, and hyphens.` };
     return { kind: "remove", label, purgeCredentials: bools.has("purge-credentials") };
   }
 
   if (action === "set-default") {
     const label = values.get("set-default")!;
-    if (!LABEL_RE.test(label)) return { error: `Invalid label "${label}". Use lowercase letters, digits, and hyphens.` };
+    if (!LABEL_RE.test(label))
+      return { error: `Invalid label "${label}". Use lowercase letters, digits, and hyphens.` };
     return { kind: "set-default", label };
   }
 
   // action === "install-skill"
   const scope = values.get("scope");
   if (!scope) return { error: "--install-skill requires --scope <project|user>." };
-  if (scope !== "project" && scope !== "user") return { error: `Invalid --scope "${scope}". Use "project" or "user".` };
+  if (scope !== "project" && scope !== "user")
+    return { error: `Invalid --scope "${scope}". Use "project" or "user".` };
   return { kind: "install-skill", scope };
 }
 
@@ -197,7 +221,9 @@ export async function runSetupNonInteractive(cmd: SetupCommand, deps: SetupDeps)
       next = upsertConnection(next, target, cfg);
       if (reg.defaultConnection === cmd.label) next = setDefaultConnection(next, target);
       if (cur.auth === "oauth") {
-        deps.out(`Renamed. If "${cmd.label}" was signed in, sign in again with: twenty-mcp login ${target}`);
+        deps.out(
+          `Renamed. If "${cmd.label}" was signed in, sign in again with: twenty-mcp login ${target}`,
+        );
       }
     } else {
       next = upsertConnection(next, target, cfg);
@@ -360,7 +386,11 @@ async function editSite(deps: SetupDeps, reg: RegistryFile): Promise<RegistryFil
   if (p.isCancel(auth)) return reg;
 
   const label = newLabel as string;
-  const cfg: ConnectionConfig = { ...cur, baseUrl: baseUrl as string, auth: auth as "oauth" | "apikey" };
+  const cfg: ConnectionConfig = {
+    ...cur,
+    baseUrl: baseUrl as string,
+    auth: auth as "oauth" | "apikey",
+  };
 
   let next = reg;
   if (label !== oldLabel) {
@@ -368,7 +398,9 @@ async function editSite(deps: SetupDeps, reg: RegistryFile): Promise<RegistryFil
     next = upsertConnection(next, label, cfg);
     if (reg.defaultConnection === oldLabel) next = setDefaultConnection(next, label);
     if (cur.auth === "oauth") {
-      p.note(`Renamed. If "${oldLabel}" was signed in, sign in again with: twenty-mcp login ${label}`);
+      p.note(
+        `Renamed. If "${oldLabel}" was signed in, sign in again with: twenty-mcp login ${label}`,
+      );
     }
   } else {
     next = upsertConnection(next, label, cfg);

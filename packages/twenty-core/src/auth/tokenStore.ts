@@ -1,8 +1,4 @@
-import {
-  randomBytes,
-  createCipheriv,
-  createDecipheriv,
-} from "node:crypto";
+import { randomBytes, createCipheriv, createDecipheriv } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -95,11 +91,7 @@ export class FileTokenStore implements TokenStore {
 
   private decrypt(blob: Blob): string {
     try {
-      const decipher = createDecipheriv(
-        "aes-256-gcm",
-        this.key(),
-        Buffer.from(blob.iv, "base64"),
-      );
+      const decipher = createDecipheriv("aes-256-gcm", this.key(), Buffer.from(blob.iv, "base64"));
       decipher.setAuthTag(Buffer.from(blob.tag, "base64"));
       return Buffer.concat([
         decipher.update(Buffer.from(blob.ct, "base64")),

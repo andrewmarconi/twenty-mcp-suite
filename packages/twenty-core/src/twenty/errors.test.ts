@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  TwentyApiError,
-  isSchemaDriftError,
-  driftHint,
-} from "./errors.js";
+import { TwentyApiError, isSchemaDriftError, driftHint } from "./errors.js";
 
 describe("TwentyApiError", () => {
   it("carries status, body, and url", () => {
@@ -24,21 +20,19 @@ describe("isSchemaDriftError", () => {
   });
 
   it("treats a 404 saying an object does not exist as drift", () => {
-    expect(
-      isSchemaDriftError(404, { messages: ['Object "companies" does not exist'] }),
-    ).toBe(true);
+    expect(isSchemaDriftError(404, { messages: ['Object "companies" does not exist'] })).toBe(true);
   });
 
   it("does not treat a record-not-found 404 as drift", () => {
-    expect(
-      isSchemaDriftError(404, { messages: ['Could not find Person with id "abc"'] }),
-    ).toBe(false);
+    expect(isSchemaDriftError(404, { messages: ['Could not find Person with id "abc"'] })).toBe(
+      false,
+    );
   });
 
   it("treats a 400 mentioning an unknown field as drift", () => {
-    expect(
-      isSchemaDriftError(400, { messages: ['Field "foo" does not exist on object'] }),
-    ).toBe(true);
+    expect(isSchemaDriftError(400, { messages: ['Field "foo" does not exist on object'] })).toBe(
+      true,
+    );
   });
 
   it("does not treat a generic 400 as drift", () => {

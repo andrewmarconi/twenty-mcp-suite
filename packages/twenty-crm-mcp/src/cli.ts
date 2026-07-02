@@ -108,7 +108,8 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
     const signedIn = new Set(await deps.store.labels());
     for (const l of labels) {
       const cfg = conns[l];
-      const state = cfg.auth === "oauth" ? (signedIn.has(l) ? "signed in" : "not signed in") : "api key";
+      const state =
+        cfg.auth === "oauth" ? (signedIn.has(l) ? "signed in" : "not signed in") : "api key";
       deps.out(`${l}  (${cfg.auth}, ${cfg.baseUrl})  — ${state}`);
     }
     return 0;

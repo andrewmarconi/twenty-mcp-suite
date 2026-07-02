@@ -68,7 +68,12 @@ describe("OAuthProvider", () => {
 
   it("refreshes a public client (no clientSecret) using the record's tokenEndpoint", async () => {
     const refreshFn = vi.fn().mockResolvedValue({ accessToken: "fresh", expiresIn: 3600 });
-    const store = memStore({ ...base, clientSecret: undefined, accessToken: "stale", expiresAt: 1_000 });
+    const store = memStore({
+      ...base,
+      clientSecret: undefined,
+      accessToken: "stale",
+      expiresAt: 1_000,
+    });
     const p = new OAuthProvider({
       label: "acme",
       store,
@@ -85,9 +90,7 @@ describe("OAuthProvider", () => {
   });
 
   it("refreshes when there is a refresh token but no access token yet", async () => {
-    const refreshFn = vi
-      .fn()
-      .mockResolvedValue({ accessToken: "fresh", expiresIn: 3600 });
+    const refreshFn = vi.fn().mockResolvedValue({ accessToken: "fresh", expiresIn: 3600 });
     const p = new OAuthProvider({
       label: "acme",
       store: memStore({ ...base }),

@@ -6,7 +6,10 @@ function conn(): Connection {
   return { label: "test", baseUrl: "https://crm.example.com", getBearer: async () => "k" };
 }
 function res(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 describe("GraphQLClient", () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { z } from "zod";
 import { auditWrap, withAudit } from "./audit.js";
 import type { AuditEntry } from "./audit.js";
@@ -36,7 +36,12 @@ describe("auditWrap", () => {
     );
     await expect(wrapped({ secret: "x" })).rejects.toThrow("boom");
     expect(entries[0]).toEqual({
-      tool: "delete_records", connection: "acme", env: undefined, outcome: "error", ms: 10, error: "boom",
+      tool: "delete_records",
+      connection: "acme",
+      env: undefined,
+      outcome: "error",
+      ms: 10,
+      error: "boom",
     });
     // the audit entry must not carry the args:
     expect(JSON.stringify(entries[0])).not.toContain("secret");

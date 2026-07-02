@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mkdtempSync, writeFileSync, rmSync, readFileSync, existsSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -67,9 +67,9 @@ describe("buildConnectionFromConfig", () => {
   });
 
   it("throws an actionable error when an apikey connection has no key", () => {
-    expect(() => buildConnectionFromConfig("acme-prod", registry.connections["acme-prod"], {})).toThrow(
-      /TWENTY_API_KEY_ACME_PROD/,
-    );
+    expect(() =>
+      buildConnectionFromConfig("acme-prod", registry.connections["acme-prod"], {}),
+    ).toThrow(/TWENTY_API_KEY_ACME_PROD/);
   });
 });
 
@@ -91,9 +91,9 @@ describe("resolveActiveConnection", () => {
   });
 
   it("throws when TWENTY_CONNECTION names an unknown label", () => {
-    expect(() =>
-      resolveActiveConnection({ TWENTY_CONNECTION: "nope" }, { registry }),
-    ).toThrow(/nope/);
+    expect(() => resolveActiveConnection({ TWENTY_CONNECTION: "nope" }, { registry })).toThrow(
+      /nope/,
+    );
   });
 
   it("uses the legacy env when no registry is provided", async () => {
@@ -211,7 +211,9 @@ describe("registry mutators", () => {
   });
 
   it("setDefaultConnection sets the field", () => {
-    const reg: RegistryFile = { connections: { acme: { baseUrl: "https://a.com", auth: "oauth" } } };
+    const reg: RegistryFile = {
+      connections: { acme: { baseUrl: "https://a.com", auth: "oauth" } },
+    };
     expect(setDefaultConnection(reg, "acme").defaultConnection).toBe("acme");
   });
 

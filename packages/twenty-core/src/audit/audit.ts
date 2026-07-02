@@ -26,7 +26,13 @@ export function auditWrap(
     const start = now();
     try {
       const result = await handler(args);
-      sink({ tool: meta.tool, connection: meta.connection, env: meta.env, outcome: "ok", ms: now() - start });
+      sink({
+        tool: meta.tool,
+        connection: meta.connection,
+        env: meta.env,
+        outcome: "ok",
+        ms: now() - start,
+      });
       return result;
     } catch (err) {
       sink({
@@ -49,6 +55,10 @@ export function withAudit(
 ): ToolDef[] {
   return tools.map((t) => ({
     ...t,
-    handler: auditWrap(t.handler, { tool: t.name, connection: meta.connection, env: meta.env }, sink),
+    handler: auditWrap(
+      t.handler,
+      { tool: t.name, connection: meta.connection, env: meta.env },
+      sink,
+    ),
   }));
 }

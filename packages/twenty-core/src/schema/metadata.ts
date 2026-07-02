@@ -36,9 +36,7 @@ export async function fetchAllObjects(rest: RestClient): Promise<ObjectSchema[]>
     cursor = page.pageInfo?.hasNextPage ? page.pageInfo.endCursor : undefined;
   } while (cursor);
 
-  return all
-    .filter((o) => o.isActive !== false)
-    .map(normalizeObject);
+  return all.filter((o) => o.isActive !== false).map(normalizeObject);
 }
 
 function normalizeObject(o: RawObject): ObjectSchema {
@@ -50,9 +48,7 @@ function normalizeObject(o: RawObject): ObjectSchema {
     isActive: o.isActive !== false,
     isSystem: o.isSystem === true,
     isSearchable: o.isSearchable === true,
-    fields: (o.fields ?? [])
-      .filter((f) => f.isActive !== false)
-      .map(normalizeField),
+    fields: (o.fields ?? []).filter((f) => f.isActive !== false).map(normalizeField),
   };
 }
 

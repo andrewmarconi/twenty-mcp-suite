@@ -4,9 +4,14 @@ import { SchemaCache } from "../schema/cache.js";
 import type { ObjectSchema } from "../schema/types.js";
 
 const people: ObjectSchema = {
-  nameSingular: "person", namePlural: "people",
-  labelSingular: "Person", labelPlural: "People",
-  isActive: true, isSystem: false, isSearchable: true, fields: [],
+  nameSingular: "person",
+  namePlural: "people",
+  labelSingular: "Person",
+  labelPlural: "People",
+  isActive: true,
+  isSystem: false,
+  isSearchable: true,
+  fields: [],
 };
 function cache() {
   return new SchemaCache({} as any, vi.fn().mockResolvedValue([people]));
@@ -26,7 +31,10 @@ describe("writeTools", () => {
     const rest = { patch: vi.fn().mockResolvedValue({ data: {} }) };
     await tool("update_records", rest).handler({
       object: "people",
-      records: [{ id: "1", name: "A" }, { id: "2", name: "B" }],
+      records: [
+        { id: "1", name: "A" },
+        { id: "2", name: "B" },
+      ],
     });
     expect(rest.patch).toHaveBeenNthCalledWith(1, "/rest/people/1", { name: "A" });
     expect(rest.patch).toHaveBeenNthCalledWith(2, "/rest/people/2", { name: "B" });

@@ -3,10 +3,23 @@ import { SchemaCache } from "./cache.js";
 import type { ObjectSchema } from "./types.js";
 
 const people: ObjectSchema = {
-  nameSingular: "person", namePlural: "people",
-  labelSingular: "Person", labelPlural: "People",
-  isActive: true, isSystem: false, isSearchable: true,
-  fields: [{ name: "name", type: "TEXT", isNullable: false, isUnique: false, isActive: true, isSystem: false }],
+  nameSingular: "person",
+  namePlural: "people",
+  labelSingular: "Person",
+  labelPlural: "People",
+  isActive: true,
+  isSystem: false,
+  isSearchable: true,
+  fields: [
+    {
+      name: "name",
+      type: "TEXT",
+      isNullable: false,
+      isUnique: false,
+      isActive: true,
+      isSystem: false,
+    },
+  ],
 };
 
 describe("SchemaCache", () => {

@@ -26,7 +26,10 @@ describe("discoverOAuth", () => {
         code_challenge_methods_supported: ["S256"],
       }),
     );
-    const out = await discoverOAuth("https://crm.example.com", fetchImpl as unknown as typeof fetch);
+    const out = await discoverOAuth(
+      "https://crm.example.com",
+      fetchImpl as unknown as typeof fetch,
+    );
     const [url] = fetchImpl.mock.calls[0];
     expect(url).toBe("https://crm.example.com/.well-known/oauth-authorization-server");
     expect(out).toEqual({
@@ -59,7 +62,9 @@ describe("discoverOAuth", () => {
 
 describe("registerClient", () => {
   it("registers a public (PKCE-only) client when the server issues no client_secret", async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(jsonRes(200, { client_id: "cid", token_endpoint_auth_method: "none" }));
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(jsonRes(200, { client_id: "cid", token_endpoint_auth_method: "none" }));
     const out = await registerClient(
       "https://crm.example.com/oauth/register",
       "http://localhost:52333/callback",
@@ -107,9 +112,11 @@ describe("registerClient", () => {
 
 describe("exchangeCode", () => {
   it("exchanges a code as form-urlencoded, omitting client_secret when not provided (public client)", async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(
-      jsonRes(200, { access_token: "at", refresh_token: "rt", expires_in: 3600 }),
-    );
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(
+        jsonRes(200, { access_token: "at", refresh_token: "rt", expires_in: 3600 }),
+      );
     const out = await exchangeCode(
       {
         tokenEndpoint: "https://crm.example.com/oauth/token",
@@ -184,9 +191,7 @@ describe("refreshToken", () => {
       },
       fetchImpl as unknown as typeof fetch,
     );
-    const params = new URLSearchParams(
-      (fetchImpl.mock.calls[0][1] as RequestInit).body as string,
-    );
+    const params = new URLSearchParams((fetchImpl.mock.calls[0][1] as RequestInit).body as string);
     expect(params.get("client_secret")).toBe("csec");
   });
 

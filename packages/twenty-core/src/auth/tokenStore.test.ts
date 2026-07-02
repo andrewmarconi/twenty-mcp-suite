@@ -1,11 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import {
-  mkdtempSync,
-  rmSync,
-  readFileSync,
-  writeFileSync,
-  statSync,
-} from "node:fs";
+import { mkdtempSync, rmSync, readFileSync, writeFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FileTokenStore, type TokenRecord } from "./tokenStore.js";
@@ -54,7 +48,7 @@ describe("FileTokenStore", () => {
     expect((await store.labels()).sort()).toEqual(["a", "b"]);
     await store.delete("a");
     expect(await store.get("a")).toBeNull();
-    expect((await store.labels())).toEqual(["b"]);
+    expect(await store.labels()).toEqual(["b"]);
   });
 
   it("a second store instance on the same dir decrypts existing records", async () => {

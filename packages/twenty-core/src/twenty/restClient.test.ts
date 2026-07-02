@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { RestClient } from "./restClient.js";
-import { TwentyApiError } from "./errors.js";
+import type { TwentyApiError } from "./errors.js";
 import type { Connection } from "../auth/types.js";
 
 function conn(): Connection {
@@ -32,9 +32,7 @@ describe("RestClient", () => {
   });
 
   it("throws TwentyApiError with status and body on non-2xx", async () => {
-    const fetchImpl = vi
-      .fn()
-      .mockResolvedValue(jsonResponse(404, { messages: ["not found"] }));
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(404, { messages: ["not found"] }));
     const client = new RestClient(conn(), fetchImpl as unknown as typeof fetch);
 
     await expect(client.get("/rest/widgets")).rejects.toMatchObject({

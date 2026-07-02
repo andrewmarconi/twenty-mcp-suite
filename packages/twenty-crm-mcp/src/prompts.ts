@@ -28,9 +28,7 @@ export function clackPrompts(): PromptAPI {
     text: (opts) =>
       clack.text({
         ...opts,
-        validate: opts.validate
-          ? (v) => opts.validate!(v ?? "")
-          : undefined,
+        validate: opts.validate ? (v) => opts.validate!(v ?? "") : undefined,
       }),
     select: <T extends string>(opts: {
       message: string;
