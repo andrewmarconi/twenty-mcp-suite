@@ -1,16 +1,16 @@
 # Graph Report - TwentyCRM-MCP  (2026-07-01)
 
 ## Corpus Check
-- 162 files · ~116,177 words
+- 168 files · ~121,953 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1415 nodes · 1583 edges · 344 communities (96 shown, 248 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.65)
+- 1505 nodes · 1632 edges · 343 communities (98 shown, 245 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 20 edges (avg confidence: 0.77)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `07be450b`
+- Built from commit: `25fa6675`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -35,7 +35,7 @@
 - [[_COMMUNITY_OAuth Plan (Plan 2)|OAuth Plan (Plan 2)]]
 - [[_COMMUNITY_Base TypeScript Config|Base TypeScript Config]]
 - [[_COMMUNITY_v1 Design & Plan|v1 Design & Plan]]
-- [[_COMMUNITY_schemaTools.ts|schemaTools.ts]]
+- [[_COMMUNITY_Design monorepo lint  format  typecheck (Biome + shared typecheck + CI)|Design: monorepo lint / format / typecheck (Biome + shared typecheck + CI)]]
 - [[_COMMUNITY_ReadWrite Tool Design|Read/Write Tool Design]]
 - [[_COMMUNITY_Setup Dependency Injection|Setup Dependency Injection]]
 - [[_COMMUNITY_restClient.ts|restClient.ts]]
@@ -80,8 +80,8 @@
 - [[_COMMUNITY_Plan 3b, Task 1 Add `depth` to `get_record` — Report|Plan 3b, Task 1: Add `depth` to `get_record` — Report]]
 - [[_COMMUNITY_Task 11 Report Schema resource + server wiring|Task 11 Report: Schema resource + server wiring]]
 - [[_COMMUNITY_MCP clients|MCP clients]]
-- [[_COMMUNITY_cli.ts|cli.ts]]
-- [[_COMMUNITY_registry.ts|registry.ts]]
+- [[_COMMUNITY_index.ts|index.ts]]
+- [[_COMMUNITY_Global Constraints|Global Constraints]]
 - [[_COMMUNITY_Plan 2, Task 5 — Loopback OAuth callback listener + browser launch|Plan 2, Task 5 — Loopback OAuth callback listener + browser launch]]
 - [[_COMMUNITY_Plan 2, Task 7 Report — Registry-file loader + wire OAuth connections|Plan 2, Task 7 Report — Registry-file loader + wire OAuth connections]]
 - [[_COMMUNITY_Plan 3a — Task 1 Report Capability profile type + `buildProfileTools`|Plan 3a — Task 1 Report: Capability profile type + `buildProfileTools`]]
@@ -89,7 +89,7 @@
 - [[_COMMUNITY_AGENTS|AGENTS.md]]
 - [[_COMMUNITY_Global Constraints|Global Constraints]]
 - [[_COMMUNITY_FileTokenStore|FileTokenStore]]
-- [[_COMMUNITY_PromptAPI|PromptAPI]]
+- [[_COMMUNITY_Global Constraints|Global Constraints]]
 - [[_COMMUNITY_Final Fix Wave Report — `featsetup-command`|Final Fix Wave Report — `feat/setup-command`]]
 - [[_COMMUNITY_TDD Evidence|TDD Evidence]]
 - [[_COMMUNITY_Plan 2, Task 6 Login flow orchestration — Report|Plan 2, Task 6: Login flow orchestration — Report]]
@@ -99,7 +99,6 @@
 - [[_COMMUNITY_Task 9 Report Write tools|Task 9 Report: Write tools]]
 - [[_COMMUNITY_OAuth Live Verification (Twenty 2.17.2)|OAuth Live Verification (Twenty 2.17.2)]]
 - [[_COMMUNITY_Docs Site (VitePress on GitHub Pages) — Design|Docs Site (VitePress on GitHub Pages) — Design]]
-- [[_COMMUNITY_tokenStore.ts|tokenStore.ts]]
 - [[_COMMUNITY_Plan 2, Task 3 OAuth HTTP client — Report|Plan 2, Task 3: OAuth HTTP client — Report]]
 - [[_COMMUNITY_Task 5 Report Wire `setup` into the CLI + docs (twenty-crm-mcp)|Task 5 Report: Wire `setup` into the CLI + docs (twenty-crm-mcp)]]
 - [[_COMMUNITY_Global Constraints|Global Constraints]]
@@ -123,7 +122,6 @@
 - [[_COMMUNITY_Resilience|Resilience]]
 - [[_COMMUNITY_Authentication|Authentication]]
 - [[_COMMUNITY_Docs site (VitePress)|Docs site (VitePress)]]
-- [[_COMMUNITY_setup.test.ts|setup.test.ts]]
 - [[_COMMUNITY_Companion Skill|Companion Skill]]
 - [[_COMMUNITY_Composite reads|Composite reads]]
 - [[_COMMUNITY_Object scoping|Object scoping]]
@@ -357,11 +355,11 @@
 
 ## God Nodes (most connected - your core abstractions)
 1. `SchemaCache` - 23 edges
-2. `TokenStore` - 19 edges
-3. `Product Requirements Document: Twenty Orchestrator MCP Suite` - 19 edges
-4. `ObjectSchema` - 17 edges
-5. `FileTokenStore` - 16 edges
-6. `RestClient` - 16 edges
+2. `Product Requirements Document: Twenty Orchestrator MCP Suite` - 19 edges
+3. `ObjectSchema` - 17 edges
+4. `RestClient` - 16 edges
+5. `TokenStore` - 15 edges
+6. `FileTokenStore` - 15 edges
 7. `Gaps Across All Self-Hosted TwentyCRM MCP Servers` - 15 edges
 8. `Global Constraints` - 15 edges
 9. `runSetupNonInteractive()` - 14 edges
@@ -372,12 +370,12 @@
   pnpm-workspace.yaml → AGENTS.md
 - `dependabot.yml (weekly npm version updates)` --conceptually_related_to--> `pnpm-workspace.yaml (workspace config, supply-chain age guard)`  [INFERRED]
   .github/dependabot.yml → pnpm-workspace.yaml
-- `deploy-docs.yml (VitePress docs to GitHub Pages)` --references--> `apps/docs VitePress documentation site`  [EXTRACTED]
-  .github/workflows/deploy-docs.yml → AGENTS.md
-- `loginConnection()` --calls--> `buildAuthorizeUrl()`  [EXTRACTED]
-  packages/twenty-core/src/auth/loginFlow.ts → packages/twenty-core/src/auth/oauthClient.ts
-- `SetupDeps` --references--> `loginConnection()`  [EXTRACTED]
-  packages/twenty-crm-mcp/src/setup.ts → packages/twenty-core/src/auth/loginFlow.ts
+- `addSite()` --calls--> `envKeyForLabel()`  [INFERRED]
+  packages/twenty-crm-mcp/src/setup.ts → packages/twenty-core/src/auth/registry.ts
+- `runSetupNonInteractive()` --calls--> `envKeyForLabel()`  [INFERRED]
+  packages/twenty-crm-mcp/src/setup.ts → packages/twenty-core/src/auth/registry.ts
+- `main()` --calls--> `resolveActiveConnection()`  [INFERRED]
+  packages/twenty-crm-mcp/src/index.ts → packages/twenty-core/src/auth/registry.ts
 
 ## Import Cycles
 - 1-file cycle: `packages/twenty-crm-mcp/src/prompts.ts -> packages/twenty-crm-mcp/src/prompts.ts`
@@ -398,19 +396,19 @@
 - **Curated CRM Segment (profile + buildProfileTools + createSegmentServer + audit)** — docs_superpowers_plans_2026_06_30_twenty_suite_plan_3a_crm_profile_crm_profile, docs_superpowers_plans_2026_06_30_twenty_suite_plan_3a_crm_profile_build_profile_tools, docs_superpowers_plans_2026_06_30_twenty_suite_plan_3a_crm_profile_create_segment_server, docs_superpowers_plans_2026_06_30_twenty_suite_plan_3b_composites_audit_with_audit [EXTRACTED 1.00]
 - **Schema-Resilience Pipeline (metadata fetch → cache → drift detection → tools)** — docs_superpowers_plans_2026_06_30_twentycrm_mcp_metadata_fetch, docs_superpowers_plans_2026_06_30_twentycrm_mcp_schema_cache, docs_superpowers_plans_2026_06_30_twentycrm_mcp_drift_detection, docs_superpowers_plans_2026_06_30_twentycrm_mcp_read_tools [EXTRACTED 1.00]
 
-## Communities (344 total, 248 thin omitted)
+## Communities (343 total, 245 thin omitted)
 
 ### Community 0 - "loginFlow.ts"
-Cohesion: 0.19
-Nodes (16): LoginDeps, LoopbackServer, openBrowser(), parseCallback(), startLoopback(), asObject(), buildAuthorizeUrl(), discoverOAuth() (+8 more)
+Cohesion: 0.12
+Nodes (19): loginConnection(), LoginDeps, meta, LoopbackServer, openBrowser(), parseCallback(), startLoopback(), asObject() (+11 more)
 
 ### Community 1 - "Connection Registry & CLI"
-Cohesion: 0.17
-Nodes (21): RegistryFile, removeConnection(), setDefaultConnection(), upsertConnection(), ACTION_FLAGS, addSite(), ALLOWED_MODIFIERS, BOOL_FLAGS (+13 more)
+Cohesion: 0.08
+Nodes (29): removeConnection(), setDefaultConnection(), upsertConnection(), CliDeps, realDeps(), runCli(), clackPrompts(), PromptAPI (+21 more)
 
 ### Community 2 - "OAuth Login Flow"
-Cohesion: 0.15
-Nodes (6): ApiKeyProvider, refreshToken(), OAuthProvider, base, TokenStore, CredentialProvider
+Cohesion: 0.07
+Nodes (28): assist, enabled, files, includes, formatter, enabled, indentStyle, indentWidth (+20 more)
 
 ### Community 3 - "Documentation Concepts"
 Cohesion: 0.33
@@ -418,7 +416,7 @@ Nodes (5): Introduction, Next, Project goals, The design in one line, What you g
 
 ### Community 4 - "Root Package Manifest"
 Cohesion: 0.05
-Nodes (36): author, bin, twenty-crm-mcp, twenty-mcp, bugs, url, dependencies, @clack/prompts (+28 more)
+Nodes (37): author, bin, twenty-crm-mcp, twenty-mcp, bugs, url, dependencies, @clack/prompts (+29 more)
 
 ### Community 5 - "Auth Architecture Concepts"
 Cohesion: 0.12
@@ -437,24 +435,24 @@ Cohesion: 0.67
 Nodes (3): twenty-core package (reusable transport-agnostic engine), dependabot.yml (weekly npm version updates), pnpm-workspace.yaml (workspace config, supply-chain age guard)
 
 ### Community 11 - "twenty-core Manifest"
-Cohesion: 0.11
-Nodes (17): dependencies, @modelcontextprotocol/sdk, zod, devDependencies, @types/node, typescript, vitest, exports (+9 more)
+Cohesion: 0.07
+Nodes (26): dependencies, @modelcontextprotocol/sdk, zod, description, devDependencies, tsup, @types/node, typescript (+18 more)
 
 ### Community 13 - "Root Workspace Scripts"
-Cohesion: 0.13
-Nodes (14): engines, node, license, name, packageManager, private, scripts, build (+6 more)
+Cohesion: 0.09
+Nodes (21): devDependencies, @biomejs/biome, engines, node, license, name, packageManager, private (+13 more)
 
 ### Community 15 - "Docs Package Manifest"
 Cohesion: 0.18
 Nodes (10): devDependencies, vitepress, name, private, scripts, build, dev, preview (+2 more)
 
 ### Community 16 - "FileTokenStore Internals"
-Cohesion: 0.22
-Nodes (7): SchemaCache, people, ObjectSchema, shape, people, upsertMutationName(), upsertTool()
+Cohesion: 0.14
+Nodes (13): SchemaCache, people, ObjectSchema, opportunities, cache(), people, tool(), schemaTools() (+5 more)
 
 ### Community 17 - "OAuth Plan (Plan 2)"
-Cohesion: 0.28
-Nodes (3): main(), crmProfile, cache
+Cohesion: 0.17
+Nodes (11): Build ordering, Changes, Design: `twenty-core` real build + dist exports (publishable library), Documentation, Housekeeping, Non-goals (out of scope), `packages/twenty-core`, `packages/twenty-crm-mcp` (+3 more)
 
 ### Community 18 - "Base TypeScript Config"
 Cohesion: 0.20
@@ -464,17 +462,21 @@ Nodes (9): compilerOptions, esModuleInterop, module, moduleResolution, resolveJs
 Cohesion: 0.15
 Nodes (12): API facts (verified against current Twenty docs), Architecture, Companion Skill, Design principle: tools are mechanism, the Skill is knowledge, Goal, Open items for the planning phase, Out of scope (v1, YAGNI), Problem (+4 more)
 
-### Community 20 - "schemaTools.ts"
-Cohesion: 0.19
-Nodes (9): AuditEntry, AuditSink, auditWrap(), stderrAuditSink(), schemaTools(), people, tool(), ToolDef (+1 more)
+### Community 20 - "Design: monorepo lint / format / typecheck (Biome + shared typecheck + CI)"
+Cohesion: 0.18
+Nodes (10): Biome setup, CI workflow, Decisions (settled), Design: monorepo lint / format / typecheck (Biome + shared typecheck + CI), Interaction with #7, Non-goals (out of scope), One-time reformat, Problem (+2 more)
 
 ### Community 21 - "Read/Write Tool Design"
+Cohesion: 0.18
+Nodes (8): AuditEntry, AuditSink, auditWrap(), stderrAuditSink(), people, profile, workflows, ToolDef
+
+### Community 23 - "restClient.ts"
 Cohesion: 0.15
-Nodes (16): withAudit(), buildProfileTools(), makeHandler(), normalizeScope(), people, profile, workflows, CapabilityProfile (+8 more)
+Nodes (6): Connection, GraphQLClient, safeJson(), Query, RestClient, safeJson()
 
 ### Community 24 - "Capability Profile Plan"
-Cohesion: 0.16
-Nodes (9): Connection, withDriftHandling(), DRIFT_PATTERNS, driftHint(), isSchemaDriftError(), TwentyApiError, GraphQLClient, safeJson() (+1 more)
+Cohesion: 0.24
+Nodes (15): withAudit(), buildProfileTools(), makeHandler(), normalizeScope(), CapabilityProfile, ProfileToolSpec, buildTools(), createSegmentServer() (+7 more)
 
 ### Community 25 - "Composite Reads Design"
 Cohesion: 0.05
@@ -493,24 +495,24 @@ Cohesion: 0.15
 Nodes (11): API key (simplest), Auditing, Authentication, Claude Code / Claude Desktop configuration, Companion Skill, Compatibility & caveats, OAuth sign-in (act as yourself, with your role), Quickstart (+3 more)
 
 ### Community 41 - "readTools.test.ts"
-Cohesion: 0.53
-Nodes (4): readTools(), cache(), people, tool()
+Cohesion: 0.47
+Nodes (5): withDriftHandling(), DRIFT_PATTERNS, driftHint(), isSchemaDriftError(), TwentyApiError
 
 ### Community 42 - "restClient.ts"
 Cohesion: 0.21
 Nodes (9): fetchAllObjects(), MetadataPage, normalizeField(), normalizeObject(), RawField, RawObject, fakeRest(), RecordedCall (+1 more)
 
 ### Community 43 - "writeTools.test.ts"
-Cohesion: 0.60
-Nodes (4): cache(), people, tool(), writeTools()
+Cohesion: 0.43
+Nodes (5): recordArray, cache(), people, tool(), writeTools()
 
 ### Community 44 - "Compatibility & caveats"
 Cohesion: 0.50
 Nodes (3): Compatibility & caveats, Three provisional wire formats, Validated against Twenty v2.17.2
 
 ### Community 45 - "aggregateTool.ts"
-Cohesion: 0.25
-Nodes (8): AGG_OPS, AggOp, aggregateShape, aggregationAlias(), AggregationSpec, aggSelector(), buildAggregateQuery(), opportunities
+Cohesion: 0.32
+Nodes (7): AGG_OPS, AggOp, aggregateShape, aggregationAlias(), AggregationSpec, aggSelector(), buildAggregateQuery()
 
 ### Community 46 - "Task 6 Report: Schema Cache"
 Cohesion: 0.10
@@ -545,8 +547,8 @@ Cohesion: 0.13
 Nodes (14): Architecture & repo layout, Connection & auth layer (`twenty-core/src/auth/`), Core primitives & transport contract, CRM segment (concretely), Locked decisions, Out of scope (Spec 1), Profile + recipe engine, Risks & mitigations (+6 more)
 
 ### Community 54 - "progress.md"
-Cohesion: 0.13
-Nodes (14): Tasks, Tasks, Tasks, Tasks, Tasks, Tasks, Twenty Suite — generic aggregate primitive (#3), Twenty Suite — Non-interactive (flag-driven) setup (+6 more)
+Cohesion: 0.12
+Nodes (16): Tasks, Tasks, Tasks, Tasks, Tasks, Tasks, Twenty Suite — generic aggregate primitive (#3), Twenty Suite — monorepo lint/format/typecheck (Biome + CI) (+8 more)
 
 ### Community 55 - "Design: generic `aggregate` primitive for `twenty-core`"
 Cohesion: 0.14
@@ -596,13 +598,13 @@ Nodes (12): Build, Concerns, Deviation from the brief's snippet, Files changed, 
 Cohesion: 0.17
 Nodes (11): Claude Code / Claude Desktop, Codex, Cursor, MCP clients, OpenClaw, OpenCode, Other clients, Pi (+3 more)
 
-### Community 67 - "cli.ts"
-Cohesion: 0.32
-Nodes (8): loginConnection(), connectionsPath(), defaultConfigDir(), CliDeps, realDeps(), realSetupDeps(), runCli(), SetupCommand
+### Community 67 - "index.ts"
+Cohesion: 0.28
+Nodes (3): main(), crmProfile, cache
 
-### Community 68 - "registry.ts"
-Cohesion: 0.35
-Nodes (9): buildConnectionFromConfig(), ConnectionConfig, envKeyForLabel(), legacyConnectionFromEnv(), loadRegistryFile(), resolveActiveConnection(), saveRegistryFile(), stripTrailingSlash() (+1 more)
+### Community 68 - "Global Constraints"
+Cohesion: 0.29
+Nodes (6): Global Constraints, Monorepo lint / format / typecheck Implementation Plan, Notes for the implementer, Task 1: Adopt Biome (config + scripts + one-time reformat), Task 2: Wire type-checking across packages, Task 3: CI workflow
 
 ### Community 69 - "Plan 2, Task 5 — Loopback OAuth callback listener + browser launch"
 Cohesion: 0.17
@@ -627,6 +629,14 @@ Nodes (9): Architecture, Authentication & connections, Capability profiles, Comm
 ### Community 74 - "Global Constraints"
 Cohesion: 0.18
 Nodes (10): Final verification, from an installed package, Global Constraints, or from a source checkout, Self-Review notes, Skill Install via `twenty-mcp setup` Implementation Plan, Task 1: `skill` seam + `installSkillAction` + menu action, Task 2: proactive one-time offer after the first add (+2 more)
+
+### Community 75 - "FileTokenStore"
+Cohesion: 0.08
+Nodes (23): ApiKeyProvider, refreshToken(), OAuthProvider, base, buildConnectionFromConfig(), ConnectionConfig, connectionsPath(), envKeyForLabel() (+15 more)
+
+### Community 76 - "Global Constraints"
+Cohesion: 0.29
+Nodes (6): Global Constraints, Notes for the implementer, Task 1: `twenty-core` — real build, publishable, dist exports, Task 2: `twenty-crm-mcp` — depend on core, stop bundling, Task 3: Docs — correct the bundling description, twenty-core real build + dist exports Implementation Plan
 
 ### Community 77 - "Final Fix Wave Report — `feat/setup-command`"
 Cohesion: 0.18
@@ -664,10 +674,6 @@ Nodes (9): 0. Build the binaries, 1. Create a connection registry, 2. Run the si
 Cohesion: 0.20
 Nodes (9): Content sourcing, Deploy, Docs Site (VitePress on GitHub Pages) — Design, Information architecture (sidebar), Locked decisions, Out of scope, Risks & mitigations, Structure (+1 more)
 
-### Community 86 - "tokenStore.ts"
-Cohesion: 0.24
-Nodes (5): meta, OAuthServerMetadata, Blob, rec, TokenRecord
-
 ### Community 87 - "Plan 2, Task 3: OAuth HTTP client — Report"
 Cohesion: 0.20
 Nodes (9): Concerns, Files changed, Full suite + typecheck, GREEN (Step 5), Plan 2, Task 3: OAuth HTTP client — Report, RED (Step 2), Self-review, Status: DONE (+1 more)
@@ -697,8 +703,8 @@ Cohesion: 0.22
 Nodes (8): Always do this first, Connecting, Filter syntax (query_records), Reading records, Recipes, When something fails with a schema mismatch, Working with Twenty CRM, Writing records
 
 ### Community 94 - "Task 2 Report: `aggregateTool` — the schema-aware `ToolDef`"
-Cohesion: 0.22
-Nodes (8): Commit range, Concerns for follow-up (not blocking), Deviation from the brief (and why), Files touched, Status: DONE, Task 2 Report: `aggregateTool` — the schema-aware `ToolDef`, Verification, What was done
+Cohesion: 0.29
+Nodes (6): Concerns, Deviation from the brief (and why), Files changed, Status: DONE, Steps and verification, Task 2 Report: `twenty-crm-mcp` — depend on core, stop bundling
 
 ### Community 95 - "Task 4 report: Documentation for non-interactive `setup`"
 Cohesion: 0.22
@@ -729,8 +735,8 @@ Cohesion: 0.29
 Nodes (6): Concerns, Confirmation: `createServer` behavior unchanged, Plan 3a, Task 2: `createSegmentServer` — Report, Self-review, TDD evidence, What changed
 
 ### Community 102 - "Task 1 Report: `buildAggregateQuery` — pure GraphQL builder"
-Cohesion: 0.29
-Nodes (6): Commit, Concerns / self-review notes, Files changed, Task 1 Report: `buildAggregateQuery` — pure GraphQL builder, Test commands + output, What was done
+Cohesion: 0.15
+Nodes (12): One deviation from the brief's literal example, and why, Real findings fixed in code (not silenced), Rule-level disables (empirical, added to `biome.json`), Scope confirmation, Step 1: Install Biome, Step 2: biome.json, Step 3: Root scripts, Step 4: One-time reformat (+4 more)
 
 ### Community 103 - "Connections & multi-instance"
 Cohesion: 0.33
@@ -760,29 +766,25 @@ Nodes (4): API key (simplest), Authentication, OAuth sign-in (act as yourself), 
 Cohesion: 0.50
 Nodes (3): Deployment, Docs site (VitePress), Local development
 
-### Community 110 - "setup.test.ts"
-Cohesion: 0.83
-Nodes (3): deps(), fakePrompts(), skillDep()
-
 ## Knowledge Gaps
-- **867 isolated node(s):** `name`, `version`, `private`, `type`, `dev` (+862 more)
+- **927 isolated node(s):** `name`, `version`, `private`, `type`, `dev` (+922 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **248 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **245 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `FileTokenStore` connect `FileTokenStore` to `loginFlow.ts`, `OAuth Login Flow`, `cli.ts`, `registry.ts`, `tokenStore.ts`?**
-  _High betweenness centrality (0.004) - this node is a cross-community bridge._
-- **Why does `RestClient` connect `restClient.ts` to `loginFlow.ts`, `readTools.test.ts`, `restClient.ts`, `FileTokenStore Internals`, `schemaTools.ts`, `Read/Write Tool Design`, `Capability Profile Plan`?**
-  _High betweenness centrality (0.004) - this node is a cross-community bridge._
-- **Why does `TokenStore` connect `OAuth Login Flow` to `loginFlow.ts`, `Connection Registry & CLI`, `cli.ts`, `registry.ts`, `FileTokenStore`, `tokenStore.ts`?**
+- **Why does `FileTokenStore` connect `FileTokenStore` to `Capability Profile Plan`?**
   _High betweenness centrality (0.003) - this node is a cross-community bridge._
+- **Why does `SchemaCache` connect `FileTokenStore Internals` to `restClient.ts`, `writeTools.test.ts`, `aggregateTool.ts`, `Read/Write Tool Design`, `Capability Profile Plan`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
+- **Why does `runSetupNonInteractive()` connect `Connection Registry & CLI` to `FileTokenStore`?**
+  _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `private` to the rest of the system?**
-  _908 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _968 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `loginFlow.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.125 - nodes in this community are weakly interconnected._
+- **Should `Connection Registry & CLI` be split into smaller, more focused modules?**
+  _Cohesion score 0.08313725490196078 - nodes in this community are weakly interconnected._
 - **Should `OAuth Login Flow` be split into smaller, more focused modules?**
-  _Cohesion score 0.14736842105263157 - nodes in this community are weakly interconnected._
-- **Should `Root Package Manifest` be split into smaller, more focused modules?**
-  _Cohesion score 0.05405405405405406 - nodes in this community are weakly interconnected._
-- **Should `Auth Architecture Concepts` be split into smaller, more focused modules?**
-  _Cohesion score 0.11764705882352941 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07142857142857142 - nodes in this community are weakly interconnected._
