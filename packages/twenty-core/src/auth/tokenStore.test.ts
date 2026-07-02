@@ -1,5 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync, readFileSync, writeFileSync, statSync } from "node:fs";
+import {
+  mkdtempSync,
+  rmSync,
+  readFileSync,
+  writeFileSync,
+  statSync,
+  chmodSync,
+  readdirSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FileTokenStore, type TokenRecord } from "./tokenStore.js";
@@ -90,6 +98,27 @@ describe("FileTokenStore", () => {
     writeFileSync(join(dir, "store.key"), Buffer.from("too-short"));
     const fresh = new FileTokenStore(dir);
     await expect(fresh.get("acme")).rejects.toThrow(/key/i);
+  });
+
+  afterEach(() => rmSync(dir, { recursive: true, force: true }));
+});
+
+describe("FileTokenStore — atomic writes", () => {
+  it("re-asserts 0600 on tokens.json even if permissions drifted", async () => {
+    const store = new FileTokenStore(dir);
+    await store.set("acme", rec);
+    chmodSync(join(dir, "tokens.json"), 0o644);
+    await store.set("other", rec);
+    const mode = statSync(join(dir, "tokens.json")).mode & 0o777;
+    expect(mode).toBe(0o600);
+  });
+
+  it("leaves no temp files behind after writes", async () => {
+    const store = new FileTokenStore(dir);
+    await store.set("acme", rec);
+    await store.delete("acme");
+    const leftovers = readdirSync(dir).filter((f) => f.includes(".tmp-"));
+    expect(leftovers).toEqual([]);
   });
 
   afterEach(() => rmSync(dir, { recursive: true, force: true }));

@@ -1,5 +1,5 @@
 import { randomBytes, createCipheriv, createDecipheriv } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync, existsSync, renameSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -122,6 +122,10 @@ export class FileTokenStore implements TokenStore {
 
   private writeAll(all: Record<string, Blob>): void {
     mkdirSync(this.dir, { recursive: true });
-    writeFileSync(this.dataPath, JSON.stringify(all, null, 2), { mode: 0o600 });
+    // Write-then-rename: same-directory rename is atomic, so readers never
+    // observe a torn tokens.json, and 0600 is re-asserted on every write.
+    const tmp = join(this.dir, `tokens.json.tmp-${process.pid}-${randomBytes(4).toString("hex")}`);
+    writeFileSync(tmp, JSON.stringify(all, null, 2), { mode: 0o600 });
+    renameSync(tmp, this.dataPath);
   }
 }
