@@ -16,9 +16,9 @@ It opens a menu that lets you:
 - **Edit or remove** an existing site.
 - **Set the default** connection.
 - For an **OAuth** site, start the browser sign-in immediately after adding it.
-- For an **API-key** site, print the exact environment variable to set (`TWENTY_API_KEY_<LABEL>`).
+- For an **API-key** site, either store the key **encrypted** right away (masked prompt) or read it from the environment — declining prints the exact variable to set (`TWENTY_API_KEY_<LABEL>`).
 
-Changes are saved after each step, so quitting partway through keeps what you already added. **No secrets are written to the registry** — API keys stay in your environment, and OAuth tokens are stored encrypted separately (see [Authentication](/guide/authentication)).
+Changes are saved after each step, so quitting partway through keeps what you already added. **No secrets are written to the registry** — API keys live in your environment or the encrypted token store, and OAuth tokens are stored encrypted separately (see [Authentication](/guide/authentication)).
 
 ## Non-interactive (scripting / CI)
 
@@ -33,9 +33,9 @@ twenty-mcp setup --install-skill --scope <project|user>
 ```
 
 - `--add` with `--auth oauth` records the site only and prints a `twenty-mcp login <label>` hint — the browser sign-in flow does not run in non-interactive mode, so it works unattended in CI. Run `twenty-mcp login <label>` separately once you need a token.
-- `--add` with `--auth apikey` prints the `TWENTY_API_KEY_<LABEL>` env var to set (falls back to `TWENTY_API_KEY`). No secret is ever written to the registry.
+- `--add` with `--auth apikey` prints the `TWENTY_API_KEY_<LABEL>` env var to set (falls back to `TWENTY_API_KEY`). No secret is ever written to the registry — and none is accepted on argv; to store a key encrypted instead, run the interactive `twenty-mcp login <label>`.
 - `--install-skill` overwrites an existing skill without prompting.
-- `--remove` with `--purge-credentials` also deletes any stored OAuth token for that label, not just the registry entry.
+- `--remove` with `--purge-credentials` also deletes any stored credential for that label (OAuth tokens or a stored API key), not just the registry entry.
 
 ## The registry file
 
@@ -63,9 +63,9 @@ Each connection is either `oauth` (browser sign-in) or `apikey`. Select the acti
 
 ```bash
 twenty-mcp setup               # interactive: create/edit connections, set default, sign in
-twenty-mcp login <label>       # browser sign-in for an oauth connection
+twenty-mcp login <label>       # browser sign-in (oauth) or masked API-key entry (apikey)
 twenty-mcp connections         # list configured connections + signed-in state
-twenty-mcp logout <label>      # remove stored tokens for a connection
+twenty-mcp logout <label>      # remove stored credentials for a connection
 ```
 
 Each server process is bound to one active connection at launch. (Switching connections within a running session is not yet supported.)

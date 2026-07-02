@@ -42,7 +42,7 @@ Using a named connection from `setup` (recommended — required for OAuth):
 }
 ```
 
-For an API-key connection, also supply its key in `env` (`TWENTY_API_KEY_<LABEL>`, or `TWENTY_API_KEY` as a fallback). To skip the registry entirely and pass an API key directly:
+For an API-key connection, supply its key in `env` (`TWENTY_API_KEY_<LABEL>`, or `TWENTY_API_KEY` as a fallback) — or store it encrypted with `twenty-mcp login <label>` so no key appears in the config at all (env vars take precedence; see [Authentication](/guide/authentication)). To skip the registry entirely and pass an API key directly:
 
 ```json
 {

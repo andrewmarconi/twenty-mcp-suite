@@ -80,8 +80,9 @@ runs them through `buildProfileTools` (scoping + business-named aliases), wraps 
 A **connection** is a named Twenty endpoint + credential provider, resolved at server launch by
 `resolveActiveConnection(env)`:
 
-- **API key:** `TWENTY_BASE_URL` + `TWENTY_API_KEY` (legacy single-instance), or per-connection
-  `TWENTY_API_KEY_<LABEL>` env vars.
+- **API key:** `TWENTY_BASE_URL` + `TWENTY_API_KEY` (legacy single-instance), per-connection
+  `TWENTY_API_KEY_<LABEL>` env vars, or a key stored encrypted in the token store
+  (`twenty-mcp login <label>` / setup). Env vars take precedence over the stored key.
 - **OAuth:** public-client authorization-code flow with **PKCE**, **dynamic client registration**
   (RFC 7591), and **endpoint discovery** (RFC 8414) — adapts to the instance automatically. Refresh
   tokens are stored **encrypted (AES-256-GCM)** by `FileTokenStore`; both resolve to a bearer token
@@ -95,8 +96,8 @@ A **connection** is a named Twenty endpoint + credential provider, resolved at s
 
 The **`twenty-mcp` CLI** manages this: `setup` (interactive TUI over `@clack/prompts` —
 add/edit/remove/set-default sites, offer OAuth sign-in), `login <label>`, `connections`,
-`logout <label>`. The registry file **never stores secrets** — API keys stay in env, OAuth tokens in
-the encrypted store.
+`logout <label>`. The registry file **never stores secrets** — API keys live in env vars or the
+encrypted token store, OAuth tokens in the encrypted store.
 
 ### Capability profiles
 

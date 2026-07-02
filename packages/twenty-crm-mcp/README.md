@@ -47,6 +47,8 @@ The server supports two ways to authenticate to Twenty; both resolve to a bearer
 
 Provide `TWENTY_BASE_URL` + `TWENTY_API_KEY` (a key created in Twenty under Settings > APIs & Webhooks), as in the Quickstart above. The assistant acts with that key's permissions.
 
+For a registry connection you can instead store the key **encrypted** in the same token store OAuth uses: run `twenty-mcp login <label>` on an `apikey` connection (or choose "Store it encrypted now" during `setup`), then start the server with just `TWENTY_CONNECTION`. Keys resolve in order: `TWENTY_API_KEY_<LABEL>` → `TWENTY_API_KEY` → the encrypted store — env vars always take precedence.
+
 ### OAuth sign-in (act as yourself, with your role)
 
 Sign in through your browser so the assistant acts as **you**, inheriting your Twenty role (object/field/row permissions enforced by Twenty), with no long-lived key to manage. It uses Twenty's OAuth 2.0 authorization-code + PKCE flow with dynamic client registration ([RFC 7591](https://datatracker.ietf.org/doc/html/rfc7591)) and endpoint discovery ([RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414)), so it adapts to your instance automatically: public or confidential client, whatever endpoints your version exposes.
@@ -65,8 +67,9 @@ Sign in through your browser so the assistant acts as **you**, inheriting your T
    ```
 
    It lets you add, edit, remove, and default Twenty sites, and can start the OAuth
-   browser sign-in immediately after adding an OAuth site. For API-key sites it prints
-   the exact environment variable to set (`TWENTY_API_KEY_<LABEL>`). No secrets are
+   browser sign-in immediately after adding an OAuth site. For API-key sites it offers
+   to store the key encrypted right away (masked prompt), or prints the exact
+   environment variable to set (`TWENTY_API_KEY_<LABEL>`). No secrets are
    written to `connections.json`.
 
    #### Non-interactive (scripting / CI)
@@ -87,10 +90,12 @@ Sign in through your browser so the assistant acts as **you**, inheriting your T
      non-interactive mode, so it works unattended in CI. Run `twenty-mcp login <label>`
      separately once you need a token.
    - `--add` with `--auth apikey` prints the `TWENTY_API_KEY_<LABEL>` env var to set
-     (falls back to `TWENTY_API_KEY`). No secret is ever written to the registry.
+     (falls back to `TWENTY_API_KEY`). No secret is ever written to the registry — and
+     none is accepted on argv; to store a key encrypted instead, run the interactive
+     `twenty-mcp login <label>`.
    - `--install-skill` overwrites an existing skill without prompting.
-   - `--remove` with `--purge-credentials` also deletes any stored OAuth token for that
-     label, not just the registry entry.
+   - `--remove` with `--purge-credentials` also deletes any stored credential for that
+     label (OAuth tokens or a stored API key), not just the registry entry.
 
    Or write the file directly:
 
@@ -109,7 +114,7 @@ Sign in through your browser so the assistant acts as **you**, inheriting your T
    ```bash
    npx -p twenty-crm-mcp twenty-mcp login acme
    npx -p twenty-crm-mcp twenty-mcp connections   # list connections + signed-in state
-   npx -p twenty-crm-mcp twenty-mcp logout acme   # remove stored tokens for a connection
+   npx -p twenty-crm-mcp twenty-mcp logout acme   # remove stored credentials for a connection
    ```
 
 3. Run the server against that connection (access tokens refresh automatically):

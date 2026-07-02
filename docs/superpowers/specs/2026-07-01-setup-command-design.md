@@ -40,6 +40,10 @@ the registry and lets the user add, edit, remove, and default sites without touc
 
 This preserves the current invariant that no secret is ever written to `connections.json`.
 
+> **Superseded (2026-07-01):** API keys may now also be stored in the encrypted token
+> store — see `2026-07-01-token-store-locking-and-api-keys-design.md`. Env vars still
+> take precedence, and the registry still never stores secrets.
+
 ## Architecture
 
 Follows the existing split: `twenty-core` = mechanism (pure, I/O-light, unit-tested);
