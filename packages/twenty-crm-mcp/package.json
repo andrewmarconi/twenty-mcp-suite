@@ -41,7 +41,7 @@
     "prepublishOnly": "tsup"
   },
   "dependencies": {
-    "@clack/prompts": "^1.6.0",
+    "@clack/prompts": "^1.7.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "twenty-core": "workspace:*",
     "zod": "^4.4.3"
